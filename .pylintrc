@@ -34,25 +34,15 @@ never-returning-functions=sys.exit
 
 
 [BASIC]
-argument-naming-style=snake_case
-attr-naming-style=snake_case
-class-attribute-naming-style=snake_case
-class-naming-style=PascalCase
+argument-naming-style=any
+attr-naming-style=any
+class-attribute-naming-style=any
+class-naming-style=any
 const-naming-style=any
-function-naming-style=snake_case
-method-naming-style=snake_case
-module-naming-style=snake_case
-variable-naming-style=snake_case
-
-# Good variable names which should always be accepted, separated by a comma.
-good-names=
-  i,
-  j,
-  k,
-  ex,
-  Run,
-  _,
-
+function-naming-style=any
+method-naming-style=any
+module-naming-style=any
+variable-naming-style=any
 
 [TYPECHECK]
 
