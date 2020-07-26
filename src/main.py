@@ -13,6 +13,7 @@ from telegram.ext import (
 from telegram.ext.filters import Filters
 
 from .option_pages import pages_handler
+from .option_copies import copies_handler
 from .print_job import PrintJob
 from .utils import convert_to_pdf
 
@@ -86,3 +87,4 @@ updater = Updater(os.getenv('BOT_API_TOKEN'), use_context=True)
 updater.dispatcher.add_handler(CommandHandler('start', authenticate))
 updater.dispatcher.add_handler(MessageHandler(Filters.document, process_file))
 updater.dispatcher.add_handler(pages_handler)
+updater.dispatcher.add_handler(copies_handler)
