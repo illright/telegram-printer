@@ -137,6 +137,8 @@ class PrintJob:
             f' •  Pages: {str(self.pages)}\n'
             f' •  Printing on {"both sides" if self.duplex else "one side"} of the page\n'
         )
+        if self.pages_per_page != 1:
+            text += f' •  {self.pages_per_page} page{s(self.pages_per_page)} per page\n'
         if self.toner_save:
             text += ' •  Toner-save is <u>enabled</u>'
 
