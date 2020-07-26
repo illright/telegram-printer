@@ -107,12 +107,16 @@ class PrintJob:
     '''An object representing a document to print with the printing options.'''
     def __init__(self, container: BinaryIO, file: File, converted: bool, toner_save: bool = True):
         reader = PyPDF4.PdfFileReader(container)
+        page_amount = reader.getNumPages()
+
         self.container = container
         self.file = file
         self.converted = converted
         self.copies = 1
-        self.pages = PageSelection(reader.getNumPages())
+        self.pages = PageSelection(page_amount)
         self.toner_save = toner_save
+        self.duplex = page_amount != 1
+        self.pages_per_page = 1
         self.id = uuid4().hex
 
         self.container.seek(0)
@@ -125,6 +129,7 @@ class PrintJob:
         return (
             f'Ready to print!\n\n'
             f'{self.copies} cop{s(self.copies, "ies", "y")}, pages: {str(self.pages)}\n'
+            f'Printing on {"both sides" if self.duplex else "one side"} of the page\n'
             f'Toner-save is {"ON" if self.toner_save else "OFF"}'
         )
 
