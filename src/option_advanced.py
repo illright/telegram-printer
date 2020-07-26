@@ -20,15 +20,17 @@ class State(Enum):
 def status_text(job: PrintJob) -> str:
     '''Return the readable description of the current settings.'''
     text = '<b>Current settings</b>:\n'
-    if job.duplex:
-        text += ' •  Printing on both sides of the page\n'
-    else:
-        text += ' •  Printing on only one side of the page\n'
+    if job.pages.page_amount != 1:
+        if job.duplex:
+            text += ' •  Printing on both sides of the page\n'
+        else:
+            text += ' •  Printing on only one side of the page\n'
     if job.toner_save:
         text += ' •  Toner-save is enabled\n'
     else:
         text += ' •  Toner-save is disabled\n'
-    text += f' •  {job.pages_per_page} document page{s(job.pages_per_page)} per 1 physical page'
+    if job.pages.page_amount != 1:
+        text += f' •  {job.pages_per_page} document page{s(job.pages_per_page)} per 1 physical page'
 
     return text
 
@@ -43,20 +45,21 @@ def get_keyboard(job: PrintJob) -> InlineKeyboardMarkup:
         [('🔙 Back', prefix + 'back')],
     ]
 
-    if job.duplex:
-        layout[0] = [('📄 Print on one side only', prefix + 'duplex')]
-    else:
-        layout[0] = [('📄 Print on both sides', prefix + 'duplex')]
+    if job.pages.page_amount != 1:
+        if job.duplex:
+            layout[0] = [('📄 Print on one side only', prefix + 'duplex')]
+        else:
+            layout[0] = [('📄 Print on both sides', prefix + 'duplex')]
+
+        if job.pages_per_page < 8:
+            layout[2] = [('📖 Print more pages on one page', prefix + 'grid')]
+        else:
+            layout[2] = [('📖 Print less pages on one page', prefix + 'grid')]
 
     if job.toner_save:
         layout[1] = [('⚫️ Disable toner-save mode', prefix + 'toner_save')]
     else:
         layout[1] = [('⚪️ Enable toner-save mode', prefix + 'toner_save')]
-
-    if job.pages_per_page < 8:
-        layout[2] = [('📖 Print more pages on one page', prefix + 'grid')]
-    else:
-        layout[2] = [('📖 Print less pages on one page', prefix + 'grid')]
 
     return get_inline_keyboard(layout)
 

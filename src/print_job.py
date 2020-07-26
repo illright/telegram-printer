@@ -134,9 +134,10 @@ class PrintJob:
         text = (
             f'<b>Ready to print!</b>\n'
             f' •  {self.copies} cop{s(self.copies, "ies", "y")}\n'
-            f' •  Pages: {str(self.pages)}\n'
-            f' •  Printing on {"both sides" if self.duplex else "one side"} of the page\n'
         )
+        if self.pages.page_amount != 1:
+            text += f' •  Pages: {str(self.pages)}\n'
+            text += f' •  Printing on {"both sides" if self.duplex else "one side"} of the page\n'
         if self.pages_per_page != 1:
             text += f' •  {self.pages_per_page} page{s(self.pages_per_page)} per page\n'
         if self.toner_save:
@@ -148,9 +149,14 @@ class PrintJob:
         '''Return an inline keyboard allowing to change the current settings.'''
         prefix = f'{self.id}:'
 
-        return get_inline_keyboard([
+        layout = [
             self.pages and [('Print', prefix + 'print')],
             self.converted and [('Preview', prefix + 'preview')],
             [('Pages', prefix + 'pages'), ('Copies', prefix + 'copies')],
             [('Advanced settings', prefix + 'advanced')]
-        ])
+        ]
+
+        if self.pages.page_amount == 1:
+            layout[2].pop(0)
+
+        return get_inline_keyboard(layout)
