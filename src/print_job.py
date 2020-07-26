@@ -128,14 +128,13 @@ class PrintJob:
             f'Toner-save is {"ON" if self.toner_save else "OFF"}'
         )
 
-    def namespace(self, query: str) -> str:
-        '''Namespace the callback query with own ID.'''
-        return f'{self.id}:{query}'
-
     def get_keyboard(self) -> InlineKeyboardMarkup:
         '''Return an inline keyboard allowing to change the current settings.'''
+        prefix = f'{self.id}:'
+
         return get_inline_keyboard([
-            self.pages and [('Print', self.namespace('print'))],
-            self.converted and [('Preview', self.namespace('preview'))],
-            [('Pages', self.namespace('pages')), ('Copies', self.namespace('copies'))],
+            self.pages and [('Print', prefix + 'print')],
+            self.converted and [('Preview', prefix + 'preview')],
+            [('Pages', prefix + 'pages'), ('Copies', prefix + 'copies')],
+            [('Advanced settings', prefix + 'advanced')]
         ])
