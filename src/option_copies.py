@@ -117,8 +117,8 @@ def unrecognized(update: Update, _context: CallbackContext):
         'I don\'t see numbers here 👀\n\n'
         'You can specify the amount of copies with a single number.\n'
         'Examples:\n'
-        ' • <code>1</code>\n'
-        ' • <code>10</code>\n',
+        ' •  <code>1</code>\n'
+        ' •  <code>10</code>\n',
         parse_mode=ParseMode.HTML,
     )
 

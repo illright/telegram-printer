@@ -178,9 +178,9 @@ def unrecognized(update: Update, _context: CallbackContext):
         'I don\'t see pages here 👀\n\n'
         'You can either write individual pages or ranges.\n'
         'Examples:\n'
-        ' • <code>1</code>\n'
-        ' • <code>2-24</code>\n'
-        ' • <code>1, 3-6, 8</code>',
+        ' •  <code>1</code>\n'
+        ' •  <code>2-24</code>\n'
+        ' •  <code>1, 3-6, 8</code>',
         parse_mode=ParseMode.HTML,
     )
 
