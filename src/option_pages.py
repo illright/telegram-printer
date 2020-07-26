@@ -1,7 +1,7 @@
 import re
 from enum import Enum, auto
 
-from telegram import Update, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardMarkup, ParseMode
 from telegram.ext import (
     CallbackContext,
     CallbackQueryHandler,
@@ -12,6 +12,7 @@ from telegram.ext.filters import Filters
 
 from .utils import s, get_inline_keyboard
 
+
 class State(Enum):
     '''The states of the conversation.'''
     ADD = auto()
@@ -21,7 +22,7 @@ page_range_ptn = re.compile(r'([0-9]+)(?:\s*[-–]\s*([0-9]+))?')
 page_status_fmt = (
     'Currently selected pages: {job.pages}\n'
     'The document has {job.pages.page_amount} page{s}.\n\n'
-    'What pages should be {verbed}? (e.g. 1 or 4-5)'
+    'What pages should be {verbed} (e.g. 1 or 4-5)?'
 )
 
 
@@ -175,8 +176,12 @@ def unrecognized(update: Update, _context: CallbackContext):
     '''Guide the user if they are unsure of what to write.'''
     update.message.reply_text(
         'I don\'t see pages here 👀\n\n'
-        'You can either write individual pages ("1", "2") or ranges ("1-3").\n'
-        'Or you can combine everything ("1, 2-24, 26, 28").'
+        'You can either write individual pages or ranges.\n'
+        'Examples:\n'
+        ' • <code>1</code>\n'
+        ' • <code>2-24</code>\n'
+        ' • <code>1, 3-6, 8</code>',
+        parse_mode=ParseMode.HTML,
     )
 
 
