@@ -77,6 +77,7 @@ def process_file(update: Update, context: CallbackContext):
 
     update.message.reply_text(
         str(job),
+        parse_mode=ParseMode.HTML,
         reply_to_message_id=update.message.message_id,
         reply_markup=job.get_keyboard(),
     )

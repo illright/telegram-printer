@@ -92,12 +92,17 @@ class PageSelection:
                     self.selection.insert(idx, slice(right.start, interval.start))
 
     def __str__(self) -> str:
-        return ', '.join(
+        string = ', '.join(
             f'{interval.start + 1}–{interval.stop}'
             if interval.start != interval.stop - 1
             else str(interval.start + 1)
             for interval in self.selection
         ) or 'None'
+
+        if self.selection[0] == slice(0, self.page_amount):
+            string += ' (all)'
+
+        return string
 
     def __bool__(self) -> bool:
         return bool(self.selection)
@@ -126,12 +131,16 @@ class PrintJob:
         if not self.pages:
             return 'No pages selected, I can\'t print nothing'
 
-        return (
-            f'Ready to print!\n\n'
-            f'{self.copies} cop{s(self.copies, "ies", "y")}, pages: {str(self.pages)}\n'
-            f'Printing on {"both sides" if self.duplex else "one side"} of the page\n'
-            f'Toner-save is {"ON" if self.toner_save else "OFF"}'
+        text = (
+            f'<b>Ready to print!</b>\n'
+            f' •  {self.copies} cop{s(self.copies, "ies", "y")}\n'
+            f' •  Pages: {str(self.pages)}\n'
+            f' •  Printing on {"both sides" if self.duplex else "one side"} of the page\n'
         )
+        if self.toner_save:
+            text += ' •  Toner-save is <u>enabled</u>'
+
+        return text
 
     def get_keyboard(self) -> InlineKeyboardMarkup:
         '''Return an inline keyboard allowing to change the current settings.'''

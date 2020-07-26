@@ -102,6 +102,7 @@ def end_conversation(update: Update, context: CallbackContext) -> int:
 
     update.effective_message.edit_text(
         str(job),
+        parse_mode=ParseMode.HTML,
         reply_markup=job.get_keyboard(),
     )
 
