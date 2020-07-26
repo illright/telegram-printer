@@ -52,7 +52,7 @@ def update_pages(update: Update, context: CallbackContext) -> State:
 
     update.effective_message.edit_text(
         page_status_fmt.format(job=job, s=s(job.pages.page_amount), verbed='added'),
-        reply_markup=get_keyboard(State.ADD, id),
+        reply_markup=get_keyboard(State.REMOVE, id),
     )
     update.callback_query.answer()
 
