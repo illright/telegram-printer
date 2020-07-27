@@ -51,7 +51,7 @@ def get_keyboard(job: PrintJob) -> InlineKeyboardMarkup:
         else:
             layout[0] = [('📄 Print on both sides', prefix + 'duplex')]
 
-        if job.pages_per_page < 8:
+        if job.pages_per_page < 6:
             layout[2] = [('📖 Print more pages on one page', prefix + 'grid')]
         else:
             layout[2] = [('📖 Print less pages on one page', prefix + 'grid')]
@@ -117,7 +117,7 @@ def initiate_grid_selection(update: Update, context: CallbackContext) -> State:
         'For compactness, you can lay out up to 8 pages of a document on a physical page.\n\n'
         'Select the desired amount of pages:',
         reply_markup=get_inline_keyboard([
-            [(str(amt), f'{prefix}:{amt}') for amt in (1, 2, 4, 6, 8) if amt != job.pages_per_page],
+            [(str(amt), f'{prefix}:{amt}') for amt in (1, 2, 4, 6) if amt != job.pages_per_page],
             [('🔙 Back', f'{prefix}:back')]
         ]),
     )
