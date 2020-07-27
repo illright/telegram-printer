@@ -1,3 +1,4 @@
+import os
 from bisect import bisect
 from typing import List, BinaryIO
 from uuid import uuid4
@@ -104,6 +105,14 @@ class PageSelection:
 
         return string
 
+    def __repr__(self) -> str:
+        return ','.join(
+            f'{interval.start + 1}-{interval.stop}'
+            if interval.start != interval.stop - 1
+            else str(interval.start + 1)
+            for interval in self.selection
+        )
+
     def __bool__(self) -> bool:
         return bool(self.selection)
 
@@ -113,6 +122,16 @@ class PrintJob:
     def __init__(self, container: BinaryIO, file: File, converted: bool, toner_save: bool = True):
         reader = PyPDF4.PdfFileReader(container)
         page_amount = reader.getNumPages()
+        landscape_pages = 0
+        portrait_pages = 0
+        for page in reader.pages:
+            rotation = page.get('/Rotate')
+            width = page.mediabox.getUpperRight_x() - page.mediabox.getUpperLeft_x()
+            height = page.mediabox.getUpperRight_y() - page.mediabox.getLowerRight_y()
+            if (width > height) == (rotation in (0, 180, None)):
+                landscape_pages += 1
+            else:
+                portrait_pages += 1
 
         self.container = container
         self.file = file
@@ -122,6 +141,7 @@ class PrintJob:
         self.toner_save = toner_save
         self.duplex = page_amount != 1
         self.pages_per_page = 1
+        self.portrait = portrait_pages > landscape_pages
         self.id = uuid4().hex
 
         self.container.seek(0)
@@ -160,3 +180,21 @@ class PrintJob:
             layout[2].pop(0)
 
         return get_inline_keyboard(layout)
+
+    def get_command(self) -> List[str]:
+        '''Generate the command for `lp` to execute this print job.'''
+        if self.duplex:
+            duplex = f'sides=two-sided-{"long" if self.portrait else "short"}-edge'
+        else:
+            duplex = 'sides=one-sided'
+
+        return [
+            'lp',
+            '-d', os.getenv('PRINTER'),
+            '-n', str(self.copies),
+            '-P', repr(self.pages),
+            '-o', f'number-up={self.pages_per_page}',
+            '-o', duplex,
+            '-o', f'print-quality={3 if self.toner_save else 5}'
+            # TODO: -o orientation-requested=4 ?
+        ]
