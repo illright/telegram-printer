@@ -126,8 +126,8 @@ class PrintJob:
         portrait_pages = 0
         for page in reader.pages:
             rotation = page.get('/Rotate')
-            width = page.mediabox.getUpperRight_x() - page.mediabox.getUpperLeft_x()
-            height = page.mediabox.getUpperRight_y() - page.mediabox.getLowerRight_y()
+            width = page.mediaBox.getUpperRight_x() - page.mediaBox.getUpperLeft_x()
+            height = page.mediaBox.getUpperRight_y() - page.mediaBox.getLowerRight_y()
             if (width > height) == (rotation in (0, 180, None)):
                 landscape_pages += 1
             else:
@@ -191,10 +191,11 @@ class PrintJob:
         return [
             'lp',
             '-d', os.getenv('PRINTER'),
+            '-t', self.id,
             '-n', str(self.copies),
             '-P', repr(self.pages),
             '-o', f'number-up={self.pages_per_page}',
             '-o', duplex,
             '-o', f'print-quality={3 if self.toner_save else 5}'
-            # TODO: -o orientation-requested=4 ?
+            '-'
         ]

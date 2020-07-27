@@ -15,6 +15,7 @@ from telegram.ext.filters import Filters
 from .option_pages import pages_handler
 from .option_copies import copies_handler
 from .option_advanced import advanced_handler
+from .action_print import print_handler
 from .print_job import PrintJob
 from .utils import convert_to_pdf
 
@@ -91,3 +92,4 @@ updater.dispatcher.add_handler(MessageHandler(Filters.document, process_file))
 updater.dispatcher.add_handler(pages_handler)
 updater.dispatcher.add_handler(copies_handler)
 updater.dispatcher.add_handler(advanced_handler)
+updater.dispatcher.add_handler(print_handler)
