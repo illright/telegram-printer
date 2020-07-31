@@ -10,6 +10,8 @@ from telegram.ext import (
 from .print_job import PrintJob
 from .utils import s, get_inline_keyboard
 
+N_UP_OPTIONS = (1, 2, 4, 6)
+
 
 class State(Enum):
     '''The states of the conversation.'''
@@ -20,7 +22,7 @@ class State(Enum):
 def status_text(job: PrintJob) -> str:
     '''Return the readable description of the current settings.'''
     text = '<b>Current settings</b>:\n'
-    if job.pages.page_amount != 1:
+    if job.pages.total != 1:
         if job.duplex:
             text += ' •  Printing on both sides of the page\n'
         else:
@@ -29,8 +31,8 @@ def status_text(job: PrintJob) -> str:
         text += ' •  Toner-save is enabled\n'
     else:
         text += ' •  Toner-save is disabled\n'
-    if job.pages.page_amount != 1:
-        text += f' •  {job.pages_per_page} document page{s(job.pages_per_page)} per 1 physical page'
+    if job.pages.total != 1:
+        text += f' •  {job.pages.per_page} document page{s(job.pages.per_page)} per 1 physical page'
 
     return text
 
@@ -45,13 +47,13 @@ def get_keyboard(job: PrintJob) -> InlineKeyboardMarkup:
         [('🔙 Back', prefix + 'back')],
     ]
 
-    if job.pages.page_amount != 1:
+    if job.pages.total != 1:
         if job.duplex:
             layout[0] = [('📄 Print on one side only', prefix + 'duplex')]
         else:
             layout[0] = [('📄 Print on both sides', prefix + 'duplex')]
 
-        if job.pages_per_page < 6:
+        if job.pages.per_page < 6:
             layout[2] = [('📖 Print more pages on one page', prefix + 'grid')]
         else:
             layout[2] = [('📖 Print less pages on one page', prefix + 'grid')]
@@ -117,7 +119,7 @@ def initiate_grid_selection(update: Update, context: CallbackContext) -> State:
         'For compactness, you can lay out up to 8 pages of a document on a physical page.\n\n'
         'Select the desired amount of pages:',
         reply_markup=get_inline_keyboard([
-            [(str(amt), f'{prefix}:{amt}') for amt in (1, 2, 4, 6) if amt != job.pages_per_page],
+            [(str(amt), f'{prefix}:{amt}') for amt in N_UP_OPTIONS if amt != job.pages.per_page],
             [('🔙 Back', f'{prefix}:back')]
         ]),
     )
@@ -130,7 +132,7 @@ def set_grid(update: Update, context: CallbackContext) -> State:
     job = context.user_data['current_job']
     grid_value = update.callback_query.data.split(':')[-1]
     if grid_value.isdigit():
-        job.pages_per_page = int(grid_value)
+        job.pages.per_page = int(grid_value)
 
     update.callback_query.answer()
     update.effective_message.edit_text(

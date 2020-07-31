@@ -1,5 +1,4 @@
 import os
-from bisect import bisect
 from typing import List, BinaryIO
 from uuid import uuid4
 
@@ -9,112 +8,7 @@ from telegram import InlineKeyboardMarkup, File
 from .utils import s, get_inline_keyboard
 
 
-class PageSelection:
-    '''A selection of pages (not necessarily continuous).'''
-
-    def __init__(self, page_amount: int):
-        self.page_amount: int = page_amount
-        self.selection: List[slice] = [slice(0, page_amount)]
-
-    def validate(self, interval: slice) -> slice:
-        '''Ensure the interval is valid and within page bounds.'''
-        left = max(interval.start, 0)
-        right = min(interval.stop, self.page_amount)
-        return slice(left, max(left, right))
-
-    def add(self, interval: slice):
-        '''Add an interval of pages into the selection.'''
-        interval = self.validate(interval)
-
-        if interval.start == interval.stop:
-            return
-
-        if not self.selection:
-            self.selection.append(interval)
-            return
-
-        idx = bisect(self.selection, interval)
-        left = self.selection[idx - 1] if idx != 0 else None
-
-        if left is not None and interval.start <= left.stop:
-            self.selection[idx - 1] = slice(left.start, max(interval.stop, left.stop))
-        else:
-            self.selection.insert(idx, interval)
-            idx += 1
-
-        while idx < len(self.selection):
-            right = self.selection[idx]
-
-            if right.stop <= interval.stop:
-                self.selection.pop(idx)
-            elif right.start <= interval.stop:
-                self.selection[idx - 1] = slice(self.selection[idx - 1].start, right.stop)
-                self.selection.pop(idx)
-                break
-            else:
-                break
-
-    def remove(self, interval: slice):
-        '''Remove an interval of pages into the selection.'''
-        interval = self.validate(interval)
-
-        if interval.start == interval.stop:
-            return
-
-        if not self.selection:
-            return
-
-        idx = bisect(self.selection, interval)
-        left = self.selection[idx - 1] if idx != 0 else None
-
-        if left is not None and interval.start < left.stop:
-            if interval.start < left.start:
-                self.selection.pop(idx - 1)
-            else:
-                if left.start == interval.start:
-                    self.selection.pop(idx - 1)
-                    idx -= 1
-                else:
-                    self.selection[idx - 1] = slice(left.start, interval.start)
-                if interval.stop < left.stop:
-                    self.selection.insert(idx, slice(interval.stop, left.stop))
-
-        while idx < len(self.selection):
-            right = self.selection[idx]
-
-            if interval.stop <= right.start:
-                break
-
-            if right.stop <= interval.stop:
-                self.selection.pop(idx)
-            else:
-                self.selection[idx] = slice(interval.stop, right.stop)
-                if interval.start < right.start:
-                    self.selection.insert(idx, slice(right.start, interval.start))
-
-    def __str__(self) -> str:
-        string = ', '.join(
-            f'{interval.start + 1}–{interval.stop}'
-            if interval.start != interval.stop - 1
-            else str(interval.start + 1)
-            for interval in self.selection
-        ) or 'None'
-
-        if self.selection[0] == slice(0, self.page_amount):
-            string += ' (all)'
-
-        return string
-
-    def __repr__(self) -> str:
-        return ','.join(
-            f'{interval.start + 1}-{interval.stop}'
-            if interval.start != interval.stop - 1
-            else str(interval.start + 1)
-            for interval in self.selection
-        )
-
-    def __bool__(self) -> bool:
-        return bool(self.selection)
+from .page_selection import PageSelection
 
 
 class PrintJob:
@@ -137,11 +31,10 @@ class PrintJob:
         self.file = file
         self.converted = converted
         self.copies = 1
-        self.pages = PageSelection(page_amount)
+        self.pages = PageSelection(reader.numPages)
         self.toner_save = toner_save
-        self.duplex = page_amount != 1
-        self.pages_per_page = 1
         self.portrait = portrait_pages > landscape_pages
+        self.duplex = self.pages.total != 1
         self.id = uuid4().hex
 
         self.container.seek(0)
@@ -155,11 +48,11 @@ class PrintJob:
             f'<b>Ready to print!</b>\n'
             f' •  {self.copies} cop{s(self.copies, "ies", "y")}\n'
         )
-        if self.pages.page_amount != 1:
+        if self.pages.total != 1:
             text += f' •  Pages: {str(self.pages)}\n'
             text += f' •  Printing on {"both sides" if self.duplex else "one side"} of the page\n'
-        if self.pages_per_page != 1:
-            text += f' •  {self.pages_per_page} page{s(self.pages_per_page)} per page\n'
+        if self.pages.per_page != 1:
+            text += f' •  {self.pages.per_page} page{s(self.pages.per_page)} per page\n'
         if self.toner_save:
             text += ' •  Toner-save is <u>enabled</u>'
 
@@ -176,7 +69,7 @@ class PrintJob:
             [('Advanced settings', prefix + 'advanced')]
         ]
 
-        if self.pages.page_amount == 1:
+        if self.pages.total == 1:
             layout[2].pop(0)
 
         return get_inline_keyboard(layout)
