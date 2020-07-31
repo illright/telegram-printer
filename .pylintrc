@@ -20,6 +20,8 @@ disable=
   too-many-ancestors,
   too-many-instance-attributes,
   missing-module-docstring,
+  no-else-return,
+  redefined-outer-name,
 
 
 [REFACTORING]

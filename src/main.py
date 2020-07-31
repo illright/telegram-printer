@@ -72,7 +72,7 @@ def process_file(update: Update, context: CallbackContext):
 
     converted = convert_to_pdf(container, update.message.document.mime_type)
 
-    job = PrintJob(container, file, converted, toner_save=context.user_data.get('toner_save', True))
+    job = PrintJob(container, converted, toner_save=context.user_data.get('toner_save', True))
 
     context.user_data.setdefault('files', {})
     context.user_data['files'][job.id] = job

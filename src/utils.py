@@ -2,6 +2,7 @@ import subprocess
 from tempfile import NamedTemporaryFile
 from typing import List, Tuple
 
+from PyPDF4 import PdfFileReader
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 
@@ -40,3 +41,18 @@ def convert_to_pdf(file: NamedTemporaryFile, mime: str) -> bool:
     file.write(unoconv.stdout)
 
     return True
+
+def is_portrait(reader: PdfFileReader) -> bool:
+    '''Based on the existing PDF reader, determine the orientation of the document.'''
+    landscape_pages = 0
+    portrait_pages = 0
+    for page in reader.pages:
+        rotation = page.get('/Rotate')
+        width = page.mediaBox.getWidth()
+        height = page.mediaBox.getHeight()
+        if (width > height) == (rotation in (0, 180, None)):
+            landscape_pages += 1
+        else:
+            portrait_pages += 1
+
+    return portrait_pages > landscape_pages

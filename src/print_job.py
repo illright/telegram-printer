@@ -2,39 +2,25 @@ import os
 from typing import List, BinaryIO
 from uuid import uuid4
 
-import PyPDF4
-from telegram import InlineKeyboardMarkup, File
+from PyPDF4 import PdfFileReader
+from telegram import InlineKeyboardMarkup
 
-from .utils import s, get_inline_keyboard
-
-
+from .utils import s, get_inline_keyboard, is_portrait
 from .page_selection import PageSelection
 
 
 class PrintJob:
     '''An object representing a document to print with the printing options.'''
-    def __init__(self, container: BinaryIO, file: File, converted: bool, toner_save: bool = True):
-        reader = PyPDF4.PdfFileReader(container)
-        page_amount = reader.getNumPages()
-        landscape_pages = 0
-        portrait_pages = 0
-        for page in reader.pages:
-            rotation = page.get('/Rotate')
-            width = page.mediaBox.getUpperRight_x() - page.mediaBox.getUpperLeft_x()
-            height = page.mediaBox.getUpperRight_y() - page.mediaBox.getLowerRight_y()
-            if (width > height) == (rotation in (0, 180, None)):
-                landscape_pages += 1
-            else:
-                portrait_pages += 1
+    def __init__(self, container: BinaryIO, converted: bool, toner_save: bool = True):
+        reader = PdfFileReader(container)
 
         self.container = container
-        self.file = file
         self.converted = converted
         self.copies = 1
         self.pages = PageSelection(reader.numPages)
         self.toner_save = toner_save
-        self.portrait = portrait_pages > landscape_pages
         self.duplex = self.pages.total != 1
+        self.portrait = is_portrait(reader)
         self.id = uuid4().hex
 
         self.container.seek(0)
