@@ -7,10 +7,9 @@ from telegram.ext import (
     ConversationHandler,
 )
 
+from .number_up_layout import number_up_options
 from .print_job import PrintJob
 from .utils import s, get_inline_keyboard
-
-N_UP_OPTIONS = (1, 2, 4, 6)
 
 
 class State(Enum):
@@ -53,7 +52,7 @@ def get_keyboard(job: PrintJob) -> InlineKeyboardMarkup:
         else:
             layout[0] = [('📄 Print on both sides', prefix + 'duplex')]
 
-        if job.pages.per_page < 6:
+        if job.pages.per_page < max(number_up_options):
             layout[2] = [('📖 Print more pages on one page', prefix + 'grid')]
         else:
             layout[2] = [('📖 Print less pages on one page', prefix + 'grid')]
@@ -116,10 +115,13 @@ def initiate_grid_selection(update: Update, context: CallbackContext) -> State:
 
     prefix = f'{job.id}:advanced:grid'
     update.effective_message.edit_text(
-        'For compactness, you can lay out up to 8 pages of a document on a physical page.\n\n'
+        f'For compactness, you can lay out up to {max(number_up_options)} pages of a document '
+        'on a physical page.\n\n'
         'Select the desired amount of pages:',
         reply_markup=get_inline_keyboard([
-            [(str(amt), f'{prefix}:{amt}') for amt in N_UP_OPTIONS if amt != job.pages.per_page],
+            [(str(amt), f'{prefix}:{amt}')
+             for amt in number_up_options
+             if amt != job.pages.per_page],
             [('🔙 Back', f'{prefix}:back')]
         ]),
     )

@@ -1,12 +1,13 @@
-import os
-from typing import List, BinaryIO
+from typing import BinaryIO
 from uuid import uuid4
 
 from PyPDF4 import PdfFileReader
 from telegram import InlineKeyboardMarkup
 
-from .utils import s, get_inline_keyboard, is_portrait
+from .cups_server import cups, printer
+from .number_up_layout import layouts
 from .page_selection import PageSelection
+from .utils import s, get_inline_keyboard, is_portrait
 
 
 class PrintJob:
@@ -22,6 +23,7 @@ class PrintJob:
         self.duplex = self.pages.total != 1
         self.portrait = is_portrait(reader)
         self.id = uuid4().hex
+        self.job_index = None
 
         self.container.seek(0)
 
@@ -60,21 +62,24 @@ class PrintJob:
 
         return get_inline_keyboard(layout)
 
-    def get_command(self) -> List[str]:
-        '''Generate the command for `lp` to execute this print job.'''
-        if self.duplex:
-            duplex = f'sides=two-sided-{"long" if self.portrait else "short"}-edge'
-        else:
-            duplex = 'sides=one-sided'
+    def start(self):
+        '''Initiate a print job with all the settings.'''
+        layout = layouts[self.pages.per_page]
+        print_options = {
+            'multiple-document-handling': 'separate-documents-collated-copies',
+            'copies': str(self.copies),
+            'print-quality': '3' if self.toner_save else '5',
+            'number-up': str(self.pages.per_page),
+            'number-up-layout': 'btlr',
+        }
 
-        return [
-            'lp',
-            '-d', os.getenv('PRINTER'),
-            '-t', self.id,
-            '-n', str(self.copies),
-            '-P', repr(self.pages),
-            '-o', f'number-up={self.pages_per_page}',
-            '-o', duplex,
-            '-o', f'print-quality={3 if self.toner_save else 5}'
-            '-'
-        ]
+        if self.pages.per_page == 1:
+            print_options['page-ranges'] = repr(self.pages)
+
+        if self.duplex:
+            length = 'long' if self.portrait == layout.is_portrait else 'short'
+            print_options['sides'] = f'two-sided-{length}-edge'
+        else:
+            print_options['sides'] = 'one-sided'
+
+        self.job_index = cups.printFile(printer, self.container.name, self.id, print_options)

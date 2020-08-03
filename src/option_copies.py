@@ -10,6 +10,7 @@ from telegram.ext import (
 )
 from telegram.ext.filters import Filters
 
+from .cups_server import cups, printer
 from .print_job import PrintJob
 from .utils import s, get_inline_keyboard
 
@@ -19,6 +20,10 @@ class State(Enum):
     UPDATE = auto()
 
 
+max_copies = cups.getPrinterAttributes(
+    printer,
+    requested_attributes=['copies-supported']
+).get('copies-supported', (1, 9999))[1]
 number_ptn = re.compile('[0-9]+')
 copies_fmt = (
     'Currently printing {job.copies} cop{s}.\n\n'
@@ -57,7 +62,7 @@ def process_input(update: Update, context: CallbackContext):
     '''Change the amount of copies arbitrarily.'''
     job = context.user_data['current_job']
     old_copies = job.copies
-    job.copies = max(1, int(context.matches[0].group()))
+    job.copies = min(max(1, int(context.matches[0].group())), max_copies)
 
     if job.copies != old_copies:
         context.user_data['effective_message'].edit_text(

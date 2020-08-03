@@ -1,5 +1,3 @@
-from subprocess import Popen
-
 from telegram import Update
 from telegram.ext import (
     CallbackContext,
@@ -15,7 +13,7 @@ def start_print_job(update: Update, context: CallbackContext):
     context.user_data['current_job'] = job
     context.user_data['effective_message'] = update.effective_message
 
-    job.process = Popen(job.get_command(), stdin=job.container)
+    job.start()
 
     update.effective_message.edit_text(
         'Sent to printing!'

@@ -9,6 +9,7 @@ verify_ssl = true
 python-telegram-bot = "*"
 python-dotenv = "*"
 pypdf4 = "*"
+pycups = "*"
 
 [requires]
 python_version = "3.8"
