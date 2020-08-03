@@ -37,10 +37,11 @@ def convert_to_pdf(file: NamedTemporaryFile, mime: str) -> bool:
                              capture_output=True,
                              check=True)
     file.seek(0)
-    file.truncate()
     file.write(unoconv.stdout)
+    file.truncate()
 
     return True
+
 
 def is_portrait(reader: PdfFileReader) -> bool:
     '''Based on the existing PDF reader, determine the orientation of the document.'''

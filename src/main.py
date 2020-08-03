@@ -12,10 +12,10 @@ from telegram.ext import (
 )
 from telegram.ext.filters import Filters
 
+from .action_print import print_handler
 from .option_pages import pages_handler
 from .option_copies import copies_handler
 from .option_advanced import advanced_handler
-from .action_print import print_handler
 from .print_job import PrintJob
 from .utils import convert_to_pdf
 
@@ -34,7 +34,7 @@ def authenticate(update: Update, context: CallbackContext):
     if (not context.user_data.get('authenticated', False)
             and not compare_digest(their_auth_token, AUTH_TOKEN)):
         update.message.reply_text(
-            'I only serve the <s>Soviet Union</s> Innopolis University.\n'
+            'I only serve <s>the Soviet Union</s> Innopolis University.\n'
             'Prove your worth by scanning the QR code above the printer. Then we\'ll talk.',
             parse_mode=ParseMode.HTML,
         )
@@ -74,8 +74,7 @@ def process_file(update: Update, context: CallbackContext):
 
     job = PrintJob(container, converted, toner_save=context.user_data.get('toner_save', True))
 
-    context.user_data.setdefault('files', {})
-    context.user_data['files'][job.id] = job
+    context.user_data.setdefault('files', {})[job.id] = job
 
     update.message.reply_text(
         str(job),
