@@ -68,11 +68,10 @@ def get_keyboard(job: PrintJob) -> InlineKeyboardMarkup:
 def update_advanced(update: Update, context: CallbackContext) -> State:
     '''Let the user change advanced settings.'''
     id = update.callback_query.data.split(':')[0]
-    job = context.user_data['files'][id]
+    job = context.bot_data['jobs'][id]
     context.user_data['current_job'] = job
-    context.user_data['effective_message'] = update.effective_message
 
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         status_text(job),
         parse_mode=ParseMode.HTML,
         reply_markup=get_keyboard(job),
@@ -88,7 +87,7 @@ def toggle_duplex(update: Update, context: CallbackContext):
     update.callback_query.answer()
     job.duplex = not job.duplex
 
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         status_text(job),
         parse_mode=ParseMode.HTML,
         reply_markup=get_keyboard(job),
@@ -101,7 +100,7 @@ def toggle_toner_save(update: Update, context: CallbackContext):
     update.callback_query.answer()
     job.toner_save = not job.toner_save
 
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         status_text(job),
         parse_mode=ParseMode.HTML,
         reply_markup=get_keyboard(job),
@@ -114,7 +113,7 @@ def initiate_grid_selection(update: Update, context: CallbackContext) -> State:
     update.callback_query.answer()
 
     prefix = f'{job.id}:advanced:grid'
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         f'For compactness, you can lay out up to {max(number_up_options)} pages of a document '
         'on a physical page.\n\n'
         'Select the desired amount of pages:',
@@ -137,7 +136,7 @@ def set_grid(update: Update, context: CallbackContext) -> State:
         job.pages.per_page = int(grid_value)
 
     update.callback_query.answer()
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         status_text(job),
         parse_mode=ParseMode.HTML,
         reply_markup=get_keyboard(job),
@@ -151,14 +150,13 @@ def end_conversation(update: Update, context: CallbackContext) -> int:
     job = context.user_data['current_job']
     update.callback_query.answer()
 
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         str(job),
         parse_mode=ParseMode.HTML,
         reply_markup=job.get_keyboard(),
     )
 
     context.user_data.pop('current_job')
-    context.user_data.pop('effective_message')
 
     return ConversationHandler.END
 

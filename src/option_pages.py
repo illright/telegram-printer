@@ -47,11 +47,10 @@ def get_keyboard(state: State, id: str) -> InlineKeyboardMarkup:
 def update_pages(update: Update, context: CallbackContext) -> State:
     '''Let the user change which pages are being printed.'''
     id = update.callback_query.data.split(':')[0]
-    job = context.user_data['files'][id]
+    job = context.bot_data['jobs'][id]
     context.user_data['current_job'] = job
-    context.user_data['effective_message'] = update.effective_message
 
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         page_status_fmt.format(job=job, s=s(job.pages.total), verbed='added'),
         reply_markup=get_keyboard(State.REMOVE, id),
     )
@@ -71,7 +70,7 @@ def process_addition(update: Update, context: CallbackContext):
             job.pages.add(slice(int(range[0]) - 1, int(range[1])))
 
     if str(job.pages) != old_selection:
-        context.user_data['effective_message'].edit_text(
+        job.status_message.edit_text(
             page_status_fmt.format(job=job, s=s(job.pages.total), verbed='added'),
             reply_markup=get_keyboard(State.ADD, job.id),
         )
@@ -90,7 +89,7 @@ def process_removal(update: Update, context: CallbackContext):
             job.pages.remove(slice(int(range[0]) - 1, int(range[1])))
 
     if str(job.pages) != old_selection:
-        context.user_data['effective_message'].edit_text(
+        job.status_message.edit_text(
             page_status_fmt.format(job=job, s=s(job.pages.total), verbed='removed'),
             reply_markup=get_keyboard(State.REMOVE, job.id),
         )
@@ -105,7 +104,7 @@ def add_all(update: Update, context: CallbackContext) -> State:
     job.pages.add(slice(0, job.pages.total))
 
     if str(job.pages) != old_selection:
-        context.user_data['effective_message'].edit_text(
+        job.status_message.edit_text(
             page_status_fmt.format(job=job, s=s(job.pages.total), verbed='removed'),
             reply_markup=get_keyboard(State.REMOVE, job.id),
         )
@@ -121,7 +120,7 @@ def remove_all(update: Update, context: CallbackContext) -> State:
     job.pages.remove(slice(0, job.pages.total))
 
     if str(job.pages) != old_selection:
-        context.user_data['effective_message'].edit_text(
+        job.status_message.edit_text(
             page_status_fmt.format(job=job, s=s(job.pages.total), verbed='added'),
             reply_markup=get_keyboard(State.ADD, job.id),
         )
@@ -134,7 +133,7 @@ def switch_to_remove(update: Update, context: CallbackContext) -> State:
     '''Change the conversation state to remove pages instead.'''
     job = context.user_data['current_job']
 
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         page_status_fmt.format(job=job, s=s(job.pages.total), verbed='removed'),
         reply_markup=get_keyboard(State.REMOVE, job.id),
     )
@@ -147,7 +146,7 @@ def switch_to_add(update: Update, context: CallbackContext) -> State:
     '''Change the conversation state to add pages instead.'''
     job = context.user_data['current_job']
 
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         page_status_fmt.format(job=job, s=s(job.pages.total), verbed='added'),
         reply_markup=get_keyboard(State.ADD, job.id),
     )
@@ -161,14 +160,13 @@ def end_conversation(update: Update, context: CallbackContext) -> int:
     job = context.user_data['current_job']
     update.callback_query.answer()
 
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         str(job),
         parse_mode=ParseMode.HTML,
         reply_markup=job.get_keyboard(),
     )
 
     context.user_data.pop('current_job')
-    context.user_data.pop('effective_message')
 
     return ConversationHandler.END
 

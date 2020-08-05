@@ -45,11 +45,10 @@ def get_keyboard(job: PrintJob) -> InlineKeyboardMarkup:
 def update_copies(update: Update, context: CallbackContext) -> State:
     '''Let the user change how many copies are being printed.'''
     id = update.callback_query.data.split(':')[0]
-    job = context.user_data['files'][id]
+    job = context.bot_data['jobs'][id]
     context.user_data['current_job'] = job
-    context.user_data['effective_message'] = update.effective_message
 
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         copies_fmt.format(job=job, s=s(job.copies, 'ies', 'y')),
         reply_markup=get_keyboard(job),
     )
@@ -65,7 +64,7 @@ def process_input(update: Update, context: CallbackContext):
     job.copies = min(max(1, int(context.matches[0].group())), max_copies)
 
     if job.copies != old_copies:
-        context.user_data['effective_message'].edit_text(
+        job.status_message.edit_text(
             copies_fmt.format(job=job, s=s(job.copies, 'ies', 'y')),
             reply_markup=get_keyboard(job),
         )
@@ -78,7 +77,7 @@ def increment(update: Update, context: CallbackContext):
     job = context.user_data['current_job']
     job.copies += 1
 
-    context.user_data['effective_message'].edit_text(
+    job.status_message.edit_text(
         copies_fmt.format(job=job, s=s(job.copies, 'ies', 'y')),
         reply_markup=get_keyboard(job),
     )
@@ -91,7 +90,7 @@ def decrement(update: Update, context: CallbackContext):
     if job.copies > 1:
         job.copies -= 1
 
-        context.user_data['effective_message'].edit_text(
+        job.status_message.edit_text(
             copies_fmt.format(job=job, s=s(job.copies, 'ies', 'y')),
             reply_markup=get_keyboard(job),
         )
@@ -105,14 +104,13 @@ def end_conversation(update: Update, context: CallbackContext) -> int:
     job = context.user_data['current_job']
     update.callback_query.answer()
 
-    update.effective_message.edit_text(
+    job.status_message.edit_text(
         str(job),
         parse_mode=ParseMode.HTML,
         reply_markup=job.get_keyboard(),
     )
 
     context.user_data.pop('current_job')
-    context.user_data.pop('effective_message')
 
     return ConversationHandler.END
 

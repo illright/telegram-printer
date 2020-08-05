@@ -73,11 +73,10 @@ def process_file(update: Update, context: CallbackContext):
     converted = convert_to_pdf(container, update.message.document.mime_type)
 
     job = PrintJob(container, converted, toner_save=context.user_data.get('toner_save', True))
+    context.bot_data.setdefault('jobs', {})[job.id] = job
 
-    context.user_data.setdefault('files', {})[job.id] = job
-
-    update.message.reply_text(
-        str(job),
+    job.status_message = update.message.reply_text(
+        job.get_message_text(),
         parse_mode=ParseMode.HTML,
         reply_to_message_id=update.message.message_id,
         reply_markup=job.get_keyboard(),
