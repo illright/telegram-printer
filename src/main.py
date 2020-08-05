@@ -2,6 +2,7 @@ import os
 from secrets import compare_digest
 from tempfile import NamedTemporaryFile
 
+from cups_notify.event import CupsEvent
 from dotenv import load_dotenv
 from telegram import Update, ParseMode
 from telegram.ext import (
@@ -13,6 +14,8 @@ from telegram.ext import (
 from telegram.ext.filters import Filters
 
 from .action_print import print_handler
+from .cups_events import process_cups_event
+from .cups_server import notifier
 from .option_pages import pages_handler
 from .option_copies import copies_handler
 from .option_advanced import advanced_handler
@@ -83,6 +86,12 @@ def process_file(update: Update, context: CallbackContext):
     )
 
 
+def catch_cups_event(event: CupsEvent):
+    '''A listener callback to CUPS events.'''
+    NOW = 0
+    updater.job_queue.run_once(process_cups_event, when=NOW, context=event)
+
+
 updater = Updater(os.getenv('BOT_API_TOKEN'), use_context=True)
 
 updater.dispatcher.add_handler(CommandHandler('start', authenticate))
@@ -91,3 +100,5 @@ updater.dispatcher.add_handler(pages_handler)
 updater.dispatcher.add_handler(copies_handler)
 updater.dispatcher.add_handler(advanced_handler)
 updater.dispatcher.add_handler(print_handler)
+
+notifier.subscribe(catch_cups_event)

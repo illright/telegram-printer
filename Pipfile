@@ -10,6 +10,7 @@ python-telegram-bot = "*"
 python-dotenv = "*"
 pypdf4 = "*"
 pycups = "*"
+pycups-notify = "*"
 
 [requires]
 python_version = "3.8"

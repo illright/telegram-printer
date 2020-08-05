@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7e846b423e178988c0eb955a30f2ff007fcb6f4c1efc01743d2de44e6a047057"
+            "sha256": "191b8153d1ae7e59b2327b75631488863eadeb4be05c0248e2d9fe660fb0fc64"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -102,6 +102,13 @@
             ],
             "index": "pypi",
             "version": "==2.0.1"
+        },
+        "pycups-notify": {
+            "hashes": [
+                "sha256:14efb44244826353faa2486a29b0fd86f52276e2111040d5b5f19f1ab9d80796"
+            ],
+            "index": "pypi",
+            "version": "==0.0.5"
         },
         "pypdf4": {
             "hashes": [

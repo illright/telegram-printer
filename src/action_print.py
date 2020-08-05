@@ -12,9 +12,6 @@ def start_print_job(update: Update, context: CallbackContext):
 
     job.start(on_finish=lambda: context.bot_data['jobs'].pop(id))
 
-    update.effective_message.edit_text(
-        'Sent to printing!'
-    )
     update.callback_query.answer('Submitted for printing!')
 
 
