@@ -1,4 +1,4 @@
-from typing import BinaryIO
+from typing import BinaryIO, Callable
 from uuid import uuid4
 
 from PyPDF4 import PdfFileReader
@@ -12,6 +12,13 @@ from .utils import s, get_inline_keyboard, is_portrait
 
 class PrintJob:
     '''An object representing a document to print with the printing options.'''
+    STATE_PREPARING = 1
+    STATE_SENT = 2
+    STATE_IN_PROGRESS = 3
+    STATE_DONE = 4
+    STATE_CANCELLED = 5
+    STATE_ERROR = 6
+
     def __init__(self, container: BinaryIO, converted: bool, toner_save: bool = True):
         reader = PdfFileReader(container)
 
@@ -24,6 +31,10 @@ class PrintJob:
         self.portrait = is_portrait(reader)
         self.id = uuid4().hex
         self.job_index = None
+        self.status_message = None
+        self.state = self.STATE_PREPARING
+        self.progress = None
+        self.on_finish = None
 
         self.container.seek(0)
 
@@ -46,24 +57,63 @@ class PrintJob:
 
         return text
 
+    def get_message_text(self) -> str:
+        '''Return the message text that is appropriate for the current state and settings.'''
+        if not self.pages:
+            return 'No pages selected, I can\'t print nothing'
+
+        if self.state == self.STATE_PREPARING:
+            text = '<b>Ready to print!</b>\n'
+        elif self.state == self.STATE_SENT:
+            text = '<b>Sent for printing!</b>\n'
+        elif self.state == self.STATE_IN_PROGRESS:
+            text = (
+                '<b>Printing in progress</b>\n'
+                + self.draw_progressbar() + '\n'
+            )
+        elif self.state == self.STATE_DONE:
+            text = '<b>All done!</b>\n'
+        elif self.state == self.STATE_CANCELLED:
+            text = '<b>Job cancelled</b>\n'
+        else:
+            text = '<b>Something broke down :(</b>\n'
+
+        text += f' •  {self.copies} cop{s(self.copies, "ies", "y")}\n'
+        if self.pages.total != 1:
+            text += f' •  Pages: {str(self.pages)}\n'
+            text += f' •  Printing on {"both sides" if self.duplex else "one side"} of the page\n'
+        if self.pages.per_page != 1:
+            text += f' •  {self.pages.per_page} page{s(self.pages.per_page)} per page\n'
+        if self.toner_save:
+            text += ' •  Toner-save is <u>enabled</u>'
+
+        return text
+
     def get_keyboard(self) -> InlineKeyboardMarkup:
-        '''Return an inline keyboard allowing to change the current settings.'''
+        '''Return an inline keyboard that is appropriate for the current state and settings.'''
         prefix = f'{self.id}:'
 
-        layout = [
-            self.pages and [('Print', prefix + 'print')],
-            self.converted and [('Preview', prefix + 'preview')],
-            [('Pages', prefix + 'pages'), ('Copies', prefix + 'copies')],
-            [('Advanced settings', prefix + 'advanced')]
-        ]
+        if self.state == self.STATE_PREPARING:
+            layout = [
+                self.pages and [('Print', prefix + 'print')],
+                self.converted and [('Preview', prefix + 'preview')],
+                [('Pages', prefix + 'pages'), ('Copies', prefix + 'copies')],
+                [('Advanced settings', prefix + 'advanced')]
+            ]
 
-        if self.pages.total == 1:
-            layout[2].pop(0)
+            if self.pages.total == 1:
+                # Remove the `Pages` button
+                layout[2].pop(0)
+        elif self.state == self.STATE_SENT:
+            layout = [[('Cancel', prefix + 'cancel')]]
+        else:
+            layout = None
 
         return get_inline_keyboard(layout)
 
-    def start(self):
+    def start(self, on_finish: Callable[[], None] = None):
         '''Initiate a print job with all the settings.'''
+        self.on_finish = on_finish
         layout = layouts[self.pages.per_page]
         print_options = {
             'multiple-document-handling': 'separate-documents-collated-copies',
