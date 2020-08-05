@@ -9,6 +9,9 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 def get_inline_keyboard(layout: List[List[Tuple[str, str]]]) -> InlineKeyboardMarkup:
     '''Return an inline keyboard from a layout of buttons
        specified as a tuple of the text and callback data.'''
+    if layout is None:
+        return None
+
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(name, callback_data=data) for (name, data) in row]
         for row in layout if row

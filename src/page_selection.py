@@ -1,4 +1,5 @@
 from bisect import bisect
+from math import ceil
 from typing import List, Generator
 
 
@@ -130,3 +131,12 @@ class PageSelection:
                 pages_left = False
             if composed_page:
                 yield composed_page
+
+    @property
+    def to_print(self) -> int:
+        '''Return the actual amount of pages that this selection will print.'''
+        pages = sum(
+            len(range(interval.start, interval.stop))
+            for interval in self.selection
+        )
+        return ceil(pages / self.per_page)
