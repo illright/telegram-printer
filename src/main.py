@@ -13,7 +13,7 @@ from telegram.ext import (
 )
 from telegram.ext.filters import Filters
 
-from .action_print import print_handler
+from .action_print import print_handler, cancel_handler
 from .cups_events import process_cups_event
 from .cups_server import notifier
 from .option_pages import pages_handler
@@ -100,5 +100,6 @@ updater.dispatcher.add_handler(pages_handler)
 updater.dispatcher.add_handler(copies_handler)
 updater.dispatcher.add_handler(advanced_handler)
 updater.dispatcher.add_handler(print_handler)
+updater.dispatcher.add_handler(cancel_handler)
 
 notifier.subscribe(catch_cups_event)
