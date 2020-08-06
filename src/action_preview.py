@@ -6,7 +6,7 @@ from telegram.ext import (
 
 
 def send_preview(update: Update, context: CallbackContext):
-    '''Cancel the printing job.'''
+    '''Send the result of conversion to PDF for inspection.'''
     id = update.callback_query.data.split(':')[0]
     job = context.bot_data['jobs'][id]
 

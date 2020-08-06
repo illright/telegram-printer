@@ -116,6 +116,13 @@ class PageSelection:
             for idx in range(interval.start, interval.stop):
                 yield idx
 
+    def __contains__(self, page):
+        idx = bisect(self.selection, slice(page, page + 1))
+        if idx - 1 in range(len(self.selection)):
+            interval = self.selection[idx - 1]
+            return page in range(interval.start, interval.stop + 1)
+        return False
+
     @property
     def n_up(self) -> Generator[List[int], None, None]:
         '''Return a generator that yields lists of pages for the N-up grouping.'''

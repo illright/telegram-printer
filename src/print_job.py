@@ -91,13 +91,17 @@ class PrintJob:
             layout = [
                 self.pages and [('Print', prefix + 'print')],
                 self.converted and [('Preview', prefix + 'preview')],
+                None,
                 [('Pages', prefix + 'pages'), ('Copies', prefix + 'copies')],
                 [('Advanced settings', prefix + 'advanced')]
             ]
 
             if self.pages.total == 1:
                 # Remove the `Pages` button
-                layout[2].pop(0)
+                layout[3].pop(0)
+
+            if not self.portrait and self.pages.total > 5 and 1 in self.pages:
+                layout[2] = [('💡 Exclude the title page', prefix + 'no_title')]
         elif self.state == self.STATE_SENT:
             layout = [[('Cancel', prefix + 'cancel')]]
         else:

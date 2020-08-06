@@ -13,6 +13,7 @@ from telegram.ext import (
 )
 from telegram.ext.filters import Filters
 
+from .action_no_title import no_title_handler
 from .action_print import print_handler, cancel_handler
 from .action_preview import preview_handler
 from .cups_events import process_cups_event
@@ -104,5 +105,6 @@ updater.dispatcher.add_handler(advanced_handler)
 updater.dispatcher.add_handler(print_handler)
 updater.dispatcher.add_handler(cancel_handler)
 updater.dispatcher.add_handler(preview_handler)
+updater.dispatcher.add_handler(no_title_handler)
 
 notifier.subscribe(catch_cups_event)
