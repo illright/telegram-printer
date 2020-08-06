@@ -38,6 +38,7 @@ def convert_to_pdf(file: NamedTemporaryFile, mime: str) -> bool:
     unoconv = subprocess.run(['unoconv', '--stdout', '-f', 'pdf', file.name],
                              text=False,
                              capture_output=True,
+                             timeout=60,
                              check=True)
     file.seek(0)
     file.write(unoconv.stdout)

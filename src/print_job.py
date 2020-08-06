@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from math import ceil
 from typing import BinaryIO, Callable
 from uuid import uuid4
@@ -24,6 +25,7 @@ class PrintJob:
     STATE_DONE = 4
     STATE_CANCELED = 5
     STATE_ERROR = 6
+    STATE_EXPIRED = 7
 
     def __init__(self, container: BinaryIO, converted: bool, toner_save: bool = True):
         reader = PdfFileReader(container)
@@ -41,6 +43,7 @@ class PrintJob:
         self.state = self.STATE_PREPARING
         self.progress = None
         self.on_finish = None
+        self.created_at = datetime.now()
 
         self.container.seek(0)
 
@@ -62,6 +65,8 @@ class PrintJob:
             text = '<b>All done!</b>\n'
         elif self.state == self.STATE_CANCELED:
             text = '<b>Job canceled</b>\n'
+        elif self.state == self.STATE_EXPIRED:
+            text = '<b>Job expired</b>\nForward the file to print again.\n'
         else:
             text = '<b>Something broke down :(</b>\n'
 
@@ -93,7 +98,8 @@ class PrintJob:
                 self.converted and [('Preview', prefix + 'preview')],
                 None,
                 [('Pages', prefix + 'pages'), ('Copies', prefix + 'copies')],
-                [('Advanced settings', prefix + 'advanced')]
+                [('Advanced settings', prefix + 'advanced')],
+                [('[DEBUG] Expire', prefix + 'expire')],
             ]
 
             if self.pages.total == 1:
@@ -140,6 +146,15 @@ class PrintJob:
         '''Cancel this print job.'''
         cups.cancelJob(self.job_index, purge_job=True)
         self.state = self.STATE_CANCELED
+        self.status_message.edit_text(
+            self.get_message_text(),
+            parse_mode=ParseMode.HTML,
+        )
+
+    def expire(self):
+        '''Expire the job, freeing up its resources.'''
+        self.container.close()
+        self.state = self.STATE_EXPIRED
         self.status_message.edit_text(
             self.get_message_text(),
             parse_mode=ParseMode.HTML,

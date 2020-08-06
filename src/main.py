@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timedelta
 from secrets import compare_digest
 from tempfile import NamedTemporaryFile
 
@@ -95,7 +96,21 @@ def catch_cups_event(event: CupsEvent):
     updater.job_queue.run_once(process_cups_event, when=NOW, context=event)
 
 
+def clean_up(context: CallbackContext):
+    '''Expire the jobs that were created more than an hour ago.'''
+    time_limit = datetime.now() - timedelta(hours=1)
+    jobs = context.bot_data.get('jobs', {})
+    expired_ids = []
+    for job_id in jobs.keys():
+        if jobs[job_id].created_at < time_limit:
+            jobs[job_id].expire()
+            expired_ids.append(job_id)
+    for job_id in expired_ids:
+        jobs.pop(job_id)
+
+
 updater = Updater(os.getenv('BOT_API_TOKEN'), use_context=True)
+updater.job_queue.run_repeating(clean_up, timedelta(hours=1))
 
 updater.dispatcher.add_handler(CommandHandler('start', authenticate))
 updater.dispatcher.add_handler(MessageHandler(Filters.document, process_file))
