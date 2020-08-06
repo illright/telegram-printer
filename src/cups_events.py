@@ -10,7 +10,6 @@ printed_pages_ptn = re.compile(r'Printed (\d+) page\(s\)\.')
 def process_cups_event(context: CallbackContext):
     '''Handling function for CUPS events to update jobs' statuses.'''
     event = context.job.context
-    print(event)
     title_match = print_job_title_ptn.fullmatch(event.title)
     if title_match is None:
         return

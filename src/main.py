@@ -14,6 +14,7 @@ from telegram.ext import (
 from telegram.ext.filters import Filters
 
 from .action_print import print_handler, cancel_handler
+from .action_preview import preview_handler
 from .cups_events import process_cups_event
 from .cups_server import notifier
 from .option_pages import pages_handler
@@ -72,6 +73,7 @@ def process_file(update: Update, context: CallbackContext):
     file = update.message.document.get_file()
     container = NamedTemporaryFile()
     file.download(out=container)
+    container.original_name = update.message.document.file_name
 
     converted = convert_to_pdf(container, update.message.document.mime_type)
 
@@ -101,5 +103,6 @@ updater.dispatcher.add_handler(copies_handler)
 updater.dispatcher.add_handler(advanced_handler)
 updater.dispatcher.add_handler(print_handler)
 updater.dispatcher.add_handler(cancel_handler)
+updater.dispatcher.add_handler(preview_handler)
 
 notifier.subscribe(catch_cups_event)

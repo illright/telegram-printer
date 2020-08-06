@@ -74,6 +74,13 @@ class PrintJob:
         if self.toner_save:
             text += ' •  Toner-save is <u>enabled</u>'
 
+        if self.converted and self.state == self.STATE_PREPARING:
+            text += (
+                '\n\n<i>Note:</i> this file was converted to PDF for printing. '
+                'Some formatting details may have been lost, '
+                'preview the conversion result to be sure.'
+            )
+
         return text
 
     def get_keyboard(self) -> InlineKeyboardMarkup:
