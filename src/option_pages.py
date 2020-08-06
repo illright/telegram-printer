@@ -161,7 +161,7 @@ def end_conversation(update: Update, context: CallbackContext) -> int:
     update.callback_query.answer()
 
     job.status_message.edit_text(
-        str(job),
+        job.get_message_text(),
         parse_mode=ParseMode.HTML,
         reply_markup=job.get_keyboard(),
     )

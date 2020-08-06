@@ -99,7 +99,6 @@ class PrintJob:
                 None,
                 [('Pages', prefix + 'pages'), ('Copies', prefix + 'copies')],
                 [('Advanced settings', prefix + 'advanced')],
-                [('[DEBUG] Expire', prefix + 'expire')],
             ]
 
             if self.pages.total == 1:
@@ -125,6 +124,7 @@ class PrintJob:
             'print-quality': '3' if self.toner_save else '5',
             'number-up': str(self.pages.per_page),
             'number-up-layout': 'btlr',
+            'media': 'a4',
         }
 
         if self.pages.per_page == 1:
@@ -171,6 +171,8 @@ class PrintJob:
             if event.description == f'Job #{self.job_index} started.':
                 self.state = self.STATE_IN_PROGRESS
                 self.progress = 0
+            elif event.description == 'Sending data to printer.':
+                return
             else:
                 pages = printed_pages_ptn.fullmatch(event.description)
                 divisor = 2 if self.duplex else 1
