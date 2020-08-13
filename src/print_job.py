@@ -1,10 +1,7 @@
-import re
 from datetime import datetime
-from math import ceil
-from typing import BinaryIO, Callable
+from typing import BinaryIO
 from uuid import uuid4
 
-from cups_notify.event import CupsEvent
 from PyPDF4 import PdfFileReader
 from telegram import InlineKeyboardMarkup, ParseMode
 
@@ -14,18 +11,12 @@ from .page_selection import PageSelection
 from .utils import s, get_inline_keyboard, is_portrait, apply_page_selection
 
 
-printed_pages_ptn = re.compile(r'Printed (\d+) page\(s\)\.')
-
-
 class PrintJob:
     '''An object representing a document to print with the printing options.'''
     STATE_PREPARING = 1
     STATE_SENT = 2
-    STATE_IN_PROGRESS = 3
+    STATE_EXPIRED = 3
     STATE_DONE = 4
-    STATE_CANCELED = 5
-    STATE_ERROR = 6
-    STATE_EXPIRED = 7
 
     def __init__(self, container: BinaryIO, converted: bool, toner_save: bool = True):
         reader = PdfFileReader(container)
@@ -41,8 +32,6 @@ class PrintJob:
         self.job_index = None
         self.status_message = None
         self.state = self.STATE_PREPARING
-        self.progress = None
-        self.on_finish = None
         self.created_at = datetime.now()
 
         self.container.seek(0)
@@ -56,19 +45,12 @@ class PrintJob:
             text = '<b>Ready to print!</b>\n'
         elif self.state == self.STATE_SENT:
             text = '<b>Sent for printing!</b>\n'
-        elif self.state == self.STATE_IN_PROGRESS:
-            text = (
-                '<b>Printing in progress</b>\n'
-                + self.draw_progressbar() + '\n'
-            )
-        elif self.state == self.STATE_DONE:
-            text = '<b>All done!</b>\n'
-        elif self.state == self.STATE_CANCELED:
-            text = '<b>Job canceled</b>\n'
         elif self.state == self.STATE_EXPIRED:
             text = '<b>Job expired</b>\nForward the file to print again.\n'
+        elif self.state == self.STATE_DONE:
+            text = '<b>Job completed</b>\nForward the file to print again.\n'
         else:
-            text = '<b>Something broke down :(</b>\n'
+            text = '<b>Something broke down :(</b>'
 
         text += f' •  {self.copies} cop{s(self.copies, "ies", "y")}\n'
         if self.pages.total != 1:
@@ -107,16 +89,13 @@ class PrintJob:
 
             if not self.portrait and self.pages.total > 5 and 1 in self.pages:
                 layout[2] = [('💡 Exclude the title page', prefix + 'no_title')]
-        elif self.state == self.STATE_SENT:
-            layout = [[('Cancel', prefix + 'cancel')]]
         else:
             layout = None
 
         return get_inline_keyboard(layout)
 
-    def start(self, on_finish: Callable[[], None] = None):
+    def start(self):
         '''Initiate a print job with all the settings.'''
-        self.on_finish = on_finish
         layout = layouts[self.pages.per_page]
         print_options = {
             'multiple-document-handling': 'separate-documents-collated-copies',
@@ -130,6 +109,8 @@ class PrintJob:
         if self.pages.per_page == 1:
             print_options['page-ranges'] = repr(self.pages)
         else:
+            # The printer setting for page ranges applies after the N-up,
+            #   which is counter-intuitive, so we exclude pages manually
             apply_page_selection(self.container, self.pages)
 
         if self.duplex:
@@ -139,15 +120,7 @@ class PrintJob:
             print_options['sides'] = 'one-sided'
 
         self.job_index = cups.printFile(printer, self.container.name, self.id, print_options)
-        self.status_message.edit_text(
-            self.get_message_text(),
-            parse_mode=ParseMode.HTML,
-        )
-
-    def cancel(self):
-        '''Cancel this print job.'''
-        cups.cancelJob(self.job_index, purge_job=True)
-        self.state = self.STATE_CANCELED
+        self.state = self.STATE_SENT
         self.status_message.edit_text(
             self.get_message_text(),
             parse_mode=ParseMode.HTML,
@@ -156,42 +129,12 @@ class PrintJob:
     def expire(self):
         '''Expire the job, freeing up its resources.'''
         self.container.close()
-        self.state = self.STATE_EXPIRED
-        self.status_message.edit_text(
-            self.get_message_text(),
-            parse_mode=ParseMode.HTML,
-        )
-
-    def process_event(self, event: CupsEvent, operation: str):
-        '''React to a CUPS event, updating the state and the message text accordingly.'''
-        if operation == 'held':
-            self.state = self.STATE_SENT
-        elif operation == 'completed':
+        if self.state == self.STATE_SENT:
             self.state = self.STATE_DONE
-            self.on_finish()
-        elif operation == 'processing':
-            if event.description == f'Job #{self.job_index} started.':
-                self.state = self.STATE_IN_PROGRESS
-                self.progress = 0
-            elif event.description == 'Sending data to printer.':
-                return
-            else:
-                pages = printed_pages_ptn.fullmatch(event.description)
-                divisor = 2 if self.duplex else 1
-                if pages is None or int(pages.group(1)) != (self.progress + 1) // divisor:
-                    self.state = self.STATE_ERROR
-                else:
-                    self.progress += 1
         else:
-            self.state = self.STATE_ERROR
+            self.state = self.STATE_EXPIRED
 
         self.status_message.edit_text(
             self.get_message_text(),
             parse_mode=ParseMode.HTML,
-            reply_markup=self.get_keyboard(),
         )
-
-    def draw_progressbar(self) -> str:
-        '''Return a string with a progressbar of 10 cells.'''
-        cells = ceil(self.progress / self.pages.to_print * 10)
-        return ('▰' * cells).ljust(10, '▱') + f'  {self.progress}/{self.pages.to_print}'

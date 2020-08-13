@@ -17,7 +17,6 @@ from telegram.ext.filters import Filters
 from .action_no_title import no_title_handler
 from .action_print import print_handler, cancel_handler
 from .action_preview import preview_handler
-from .cups_events import process_cups_event
 from .cups_server import notifier
 from .option_pages import pages_handler
 from .option_copies import copies_handler
@@ -92,8 +91,7 @@ def process_file(update: Update, context: CallbackContext):
 
 def catch_cups_event(event: CupsEvent):
     '''A listener callback to CUPS events.'''
-    NOW = 0
-    updater.job_queue.run_once(process_cups_event, when=NOW, context=event)
+    print(event)
 
 
 def clean_up(context: CallbackContext):
