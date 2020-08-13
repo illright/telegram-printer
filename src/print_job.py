@@ -11,7 +11,7 @@ from telegram import InlineKeyboardMarkup, ParseMode
 from .cups_server import cups, printer
 from .number_up_layout import layouts
 from .page_selection import PageSelection
-from .utils import s, get_inline_keyboard, is_portrait
+from .utils import s, get_inline_keyboard, is_portrait, apply_page_selection
 
 
 printed_pages_ptn = re.compile(r'Printed (\d+) page\(s\)\.')
@@ -129,6 +129,8 @@ class PrintJob:
 
         if self.pages.per_page == 1:
             print_options['page-ranges'] = repr(self.pages)
+        else:
+            apply_page_selection(self.container, self.pages)
 
         if self.duplex:
             length = 'long' if self.portrait == layout.is_portrait else 'short'

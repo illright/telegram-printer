@@ -1,9 +1,12 @@
 import subprocess
+from io import BytesIO
 from tempfile import NamedTemporaryFile
-from typing import List, Tuple
+from typing import List, Tuple, BinaryIO
 
-from PyPDF4 import PdfFileReader
+from PyPDF4 import PdfFileReader, PdfFileWriter
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+
+from .page_selection import PageSelection
 
 
 def get_inline_keyboard(layout: List[List[Tuple[str, str]]]) -> InlineKeyboardMarkup:
@@ -61,3 +64,19 @@ def is_portrait(reader: PdfFileReader) -> bool:
             portrait_pages += 1
 
     return portrait_pages > landscape_pages
+
+
+def apply_page_selection(pdf: BinaryIO, pages: PageSelection):
+    '''Exclude the pages from the PDF that weren't selected.'''
+    reader = PdfFileReader(pdf)
+    writer = PdfFileWriter()
+
+    for page_idx in pages:
+        writer.addPage(reader.getPage(page_idx))
+
+    output = BytesIO()
+    writer.write(output)
+    pdf.seek(0)
+    pdf.write(output.getvalue())
+    pdf.truncate()
+    pdf.seek(0)
