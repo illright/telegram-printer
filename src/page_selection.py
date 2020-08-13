@@ -109,14 +109,17 @@ class PageSelection:
         )
 
     def __bool__(self) -> bool:
+        '''Return True if any pages are selected, False otherwise.'''
         return bool(self.selection)
 
     def __iter__(self) -> Generator[int, None, None]:
+        '''Return an iterator over the selected pages.'''
         for interval in self.selection:
             for idx in range(interval.start, interval.stop):
                 yield idx
 
     def __contains__(self, page):
+        '''Whether a page is selected by this selection.'''
         idx = bisect(self.selection, slice(page, page + 1))
         if idx - 1 in range(len(self.selection)):
             interval = self.selection[idx - 1]
