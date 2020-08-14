@@ -10,6 +10,7 @@ from telegram.ext import (
     CallbackContext,
     CommandHandler,
     MessageHandler,
+    PicklePersistence,
     Updater,
 )
 from telegram.ext.filters import Filters
@@ -60,7 +61,7 @@ def authenticate(update: Update, context: CallbackContext):
 
 def process_file(update: Update, context: CallbackContext):
     '''Accept a file from a user and set up a print job.'''
-    if not context.user_data.get('authenticated', False) and False:
+    if not context.user_data.get('authenticated', False):
         update.message.reply_text(
             'I will not fulfill your request until you prove your worth.\n'
             'Scan the QR code above the student printer on the 5th floor'
@@ -107,7 +108,8 @@ def clean_up(context: CallbackContext):
         jobs.pop(job_id)
 
 
-updater = Updater(os.getenv('BOT_API_TOKEN'), use_context=True)
+persistence = PicklePersistence(filename='data.pkl', store_bot_data=False)
+updater = Updater(os.getenv('BOT_API_TOKEN'), persistence=persistence, use_context=True)
 updater.job_queue.run_repeating(clean_up, timedelta(hours=1))
 
 updater.dispatcher.add_handler(CommandHandler('start', authenticate))
