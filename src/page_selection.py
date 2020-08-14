@@ -87,6 +87,10 @@ class PageSelection:
                 if interval.start < right.start:
                     self.selection.insert(idx, slice(right.start, interval.start))
 
+    def clear(self):
+        '''Remove all pages from selection.'''
+        self.selection.clear()
+
     def __str__(self) -> str:
         string = ', '.join(
             f'{interval.start + 1}–{interval.stop}'
@@ -97,6 +101,8 @@ class PageSelection:
 
         if self.selection and self.selection[0] == slice(0, self.total):
             string += ' (all)'
+        elif len(self.selection) == 1 and self.selection[0].start == self.selection[0].stop - 1:
+            string += ' (single page)'
 
         return string
 

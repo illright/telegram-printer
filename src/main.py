@@ -16,6 +16,7 @@ from telegram.ext import (
 from telegram.ext.filters import Filters
 
 from .action_no_title import no_title_handler
+from .action_parse_caption import parse_caption_handler
 from .action_print import print_handler, cancel_handler
 from .action_preview import preview_handler
 from .cups_server import notifier
@@ -79,7 +80,10 @@ def process_file(update: Update, context: CallbackContext):
 
     converted = convert_to_pdf(container, update.message.document.mime_type)
 
-    job = PrintJob(container, converted, toner_save=context.user_data.get('toner_save', True))
+    job = PrintJob(container,
+                   converted,
+                   update.message.caption,
+                   toner_save=context.user_data.get('toner_save', True))
     context.bot_data.setdefault('jobs', {})[job.id] = job
 
     job.status_message = update.message.reply_text(
@@ -135,5 +139,6 @@ updater.dispatcher.add_handler(print_handler)
 updater.dispatcher.add_handler(cancel_handler)
 updater.dispatcher.add_handler(preview_handler)
 updater.dispatcher.add_handler(no_title_handler)
+updater.dispatcher.add_handler(parse_caption_handler)
 
 notifier.subscribe(catch_cups_event)

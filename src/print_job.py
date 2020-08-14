@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import BinaryIO
 from uuid import uuid4
@@ -10,6 +11,8 @@ from .number_up_layout import layouts
 from .page_selection import PageSelection
 from .utils import s, get_inline_keyboard, is_portrait, apply_page_selection
 
+page_range_ptn = re.compile(r'([0-9]+)(?:\s*[-–]\s*([0-9]+))?')
+
 
 class PrintJob:
     '''An object representing a document to print with the printing options.'''
@@ -18,7 +21,7 @@ class PrintJob:
     STATE_EXPIRED = 3
     STATE_DONE = 4
 
-    def __init__(self, container: BinaryIO, converted: bool, toner_save: bool = True):
+    def __init__(self, container: BinaryIO, converted: bool, caption: str, toner_save: bool = True):
         reader = PdfFileReader(container)
 
         self.container = container
@@ -33,6 +36,7 @@ class PrintJob:
         self.status_message = None
         self.state = self.STATE_PREPARING
         self.created_at = datetime.now()
+        self.potential_page_ranges = page_range_ptn.findall(caption)
 
         self.container.seek(0)
 
@@ -79,20 +83,36 @@ class PrintJob:
                 self.pages and [('Print', prefix + 'print')],
                 self.converted and [('Preview', prefix + 'preview')],
                 None,
+                None,
                 [('Pages', prefix + 'pages'), ('Copies', prefix + 'copies')],
                 [('Advanced settings', prefix + 'advanced')],
             ]
 
             if self.pages.total == 1:
                 # Remove the `Pages` button
-                layout[3].pop(0)
+                layout[4].pop(0)
 
             if not self.portrait and self.pages.total > 5 and 1 in self.pages:
                 layout[2] = [('💡 Exclude the title page', prefix + 'no_title')]
+
+            if self.potential_page_ranges:
+                layout[3] = [('💡 Select the pages in the caption', prefix + 'parse_caption')]
         else:
             layout = None
 
         return get_inline_keyboard(layout)
+
+    def parse_caption(self):
+        '''Initialize the page selection with the ranges from the caption.'''
+        self.pages.clear()
+
+        for range in self.potential_page_ranges:
+            if not range[1]:
+                self.pages.add(slice(int(range[0]) - 1, int(range[0])))
+            else:
+                self.pages.add(slice(int(range[0]) - 1, int(range[1])))
+
+        self.potential_page_ranges = None
 
     def start(self):
         '''Initiate a print job with all the settings.'''
