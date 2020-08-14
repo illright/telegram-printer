@@ -90,6 +90,19 @@ def process_file(update: Update, context: CallbackContext):
     )
 
 
+def toggle_toner_save(update: Update, context: CallbackContext):
+    '''Toggle the default setting for toner save mode.'''
+    context.user_data['toner_save'] = not context.user_data.get('toner_save', True)
+    if context.user_data['toner_save']:
+        update.message.reply_text(
+            'Toner save enabled by default! To turn it off, use the /toner_save command again.\n'
+        )
+    else:
+        update.message.reply_text(
+            'Toner save disabled by default! To turn it on, use the /toner_save command again.\n'
+        )
+
+
 def catch_cups_event(event: CupsEvent):
     '''A listener callback to CUPS events.'''
     print(event)
@@ -113,6 +126,7 @@ updater = Updater(os.getenv('BOT_API_TOKEN'), persistence=persistence, use_conte
 updater.job_queue.run_repeating(clean_up, timedelta(hours=1))
 
 updater.dispatcher.add_handler(CommandHandler('start', authenticate))
+updater.dispatcher.add_handler(CommandHandler('toner_save', toggle_toner_save))
 updater.dispatcher.add_handler(MessageHandler(Filters.document, process_file))
 updater.dispatcher.add_handler(pages_handler)
 updater.dispatcher.add_handler(copies_handler)
