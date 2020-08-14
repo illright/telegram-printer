@@ -36,7 +36,7 @@ class PrintJob:
         self.status_message = None
         self.state = self.STATE_PREPARING
         self.created_at = datetime.now()
-        self.potential_page_ranges = page_range_ptn.findall(caption)
+        self.potential_page_ranges = page_range_ptn.findall(caption or '')
 
         self.container.seek(0)
 
@@ -63,11 +63,11 @@ class PrintJob:
         if self.pages.per_page != 1:
             text += f' •  {self.pages.per_page} page{s(self.pages.per_page)} per page\n'
         if self.toner_save:
-            text += ' •  Toner-save is <u>enabled</u>'
+            text += ' •  Toner-save is <u>enabled</u>\n'
 
         if self.converted and self.state == self.STATE_PREPARING:
             text += (
-                '\n\n<i>Note:</i> this file was converted to PDF for printing. '
+                '\n<i>Note:</i> this file was converted to PDF for printing. '
                 'Some formatting details may have been lost, '
                 'preview the conversion result to be sure.'
             )

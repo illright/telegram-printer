@@ -8,9 +8,7 @@ from telegram.ext import (
 def start_print_job(update: Update, context: CallbackContext):
     '''Start the printing job.'''
     id = update.callback_query.data.split(':')[0]
-    job = context.bot_data['jobs'][id]
-
-    job.start(on_finish=lambda: context.bot_data['jobs'].pop(id))
+    context.bot_data['jobs'][id].start()
 
     update.callback_query.answer('Submitted for printing!')
 
