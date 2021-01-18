@@ -50,13 +50,20 @@ def update_pages(update: Update, context: CallbackContext) -> State:
     job = context.bot_data['jobs'][id]
     context.user_data['current_job_id'] = job.id
 
+    if job.pages:
+        verb = 'removed'
+        state = State.REMOVE
+    else:
+        verb = 'added'
+        state = State.ADD
+
     job.status_message.edit_text(
-        page_status_fmt.format(job=job, s=s(job.pages.total), verbed='removed'),
-        reply_markup=get_keyboard(State.REMOVE, id),
+        page_status_fmt.format(job=job, s=s(job.pages.total), verbed=verb),
+        reply_markup=get_keyboard(state, id),
     )
     update.callback_query.answer()
 
-    return State.REMOVE
+    return state
 
 
 def process_addition(update: Update, context: CallbackContext):
