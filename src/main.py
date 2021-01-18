@@ -49,13 +49,13 @@ def authenticate(update: Update, context: CallbackContext):
             'Greetings! Send me any files you want to print and, with any luck, '
             'they\'ll soon be awaiting you at the student printer (5th floor).'
         )
-        update.message.reply_text(
-            'You\'ll notice that toner save is on by default. '
-            'This just means that the printed text is lighter than regular, '
-            'but still very readable. You can turn it off for some documents specifically '
-            'or turn off by default with the /toner_save command.\n'
-            'Consider using it for non-critical printing~'
-        )
+        # update.message.reply_text(
+        #     'You\'ll notice that toner save is on by default. '
+        #     'This just means that the printed text is lighter than regular, '
+        #     'but still very readable. You can turn it off for some documents specifically '
+        #     'or turn off by default with the /toner_save command.\n'
+        #     'Consider using it for non-critical printing~'
+        # )
 
 
 def process_file(update: Update, context: CallbackContext):
@@ -128,7 +128,7 @@ updater = Updater(os.getenv('BOT_API_TOKEN'), persistence=persistence, use_conte
 updater.job_queue.run_repeating(clean_up, timedelta(hours=1))
 
 updater.dispatcher.add_handler(CommandHandler('start', authenticate))
-updater.dispatcher.add_handler(CommandHandler('toner_save', toggle_toner_save))
+# updater.dispatcher.add_handler(CommandHandler('toner_save', toggle_toner_save))
 updater.dispatcher.add_handler(MessageHandler(Filters.document, process_file))
 updater.dispatcher.add_handler(pages_handler)
 updater.dispatcher.add_handler(copies_handler)

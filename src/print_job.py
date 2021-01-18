@@ -62,8 +62,8 @@ class PrintJob:
             text += f' •  Printing on {"both sides" if self.duplex else "one side"} of the page\n'
         if self.pages.per_page != 1:
             text += f' •  {self.pages.per_page} page{s(self.pages.per_page)} per page\n'
-        if self.toner_save:
-            text += ' •  Toner-save is <u>enabled</u>\n'
+        # if self.toner_save:
+        #     text += ' •  Toner-save is <u>enabled</u>\n'
 
         if self.converted and self.state == self.STATE_PREPARING:
             text += (
@@ -89,6 +89,8 @@ class PrintJob:
             ]
 
             if self.pages.total == 1:
+                # Remove the `Advanced settings` button
+                layout.pop(5)
                 # Remove the `Pages` button
                 layout[4].pop(0)
 
@@ -120,7 +122,8 @@ class PrintJob:
         print_options = {
             'multiple-document-handling': 'separate-documents-collated-copies',
             'copies': str(self.copies),
-            'print-quality': '3' if self.toner_save else '5',
+            # 'print-quality': '3' if self.toner_save else '5',
+            # 'PrintoutMode': 'Draft.Gray' if self.toner_save else 'High.Gray',
             'number-up': str(self.pages.per_page),
             'number-up-layout': 'btlr',
             'media': 'a4',
