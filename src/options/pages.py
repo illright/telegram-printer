@@ -51,7 +51,7 @@ def update_pages(update: Update, context: CallbackContext) -> State:
     context.user_data['current_job_id'] = job.id
 
     job.status_message.edit_text(
-        page_status_fmt.format(job=job, s=s(job.pages.total), verbed='added'),
+        page_status_fmt.format(job=job, s=s(job.pages.total), verbed='removed'),
         reply_markup=get_keyboard(State.REMOVE, id),
     )
     update.callback_query.answer()
