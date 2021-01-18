@@ -69,7 +69,7 @@ def update_advanced(update: Update, context: CallbackContext) -> State:
     '''Let the user change advanced settings.'''
     id = update.callback_query.data.split(':')[0]
     job = context.bot_data['jobs'][id]
-    context.user_data['current_job'] = job
+    context.user_data['current_job_id'] = job.id
 
     job.status_message.edit_text(
         status_text(job),
@@ -83,7 +83,8 @@ def update_advanced(update: Update, context: CallbackContext) -> State:
 
 def toggle_duplex(update: Update, context: CallbackContext):
     '''Toggle the duplex setting.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     update.callback_query.answer()
     job.duplex = not job.duplex
 
@@ -96,7 +97,8 @@ def toggle_duplex(update: Update, context: CallbackContext):
 
 def toggle_toner_save(update: Update, context: CallbackContext):
     '''Toggle the toner save setting.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     update.callback_query.answer()
     job.toner_save = not job.toner_save
 
@@ -109,7 +111,8 @@ def toggle_toner_save(update: Update, context: CallbackContext):
 
 def initiate_grid_selection(update: Update, context: CallbackContext) -> State:
     '''Present the options for the amount of document pages per physical page.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     update.callback_query.answer()
 
     prefix = f'{job.id}:advanced:grid'
@@ -130,7 +133,8 @@ def initiate_grid_selection(update: Update, context: CallbackContext) -> State:
 
 def set_grid(update: Update, context: CallbackContext) -> State:
     '''Modify the amount of document pages per physical page.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     grid_value = update.callback_query.data.split(':')[-1]
     if grid_value.isdigit():
         job.pages.per_page = int(grid_value)
@@ -147,7 +151,8 @@ def set_grid(update: Update, context: CallbackContext) -> State:
 
 def end_conversation(update: Update, context: CallbackContext) -> int:
     '''End the conversation and show the job status again.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     update.callback_query.answer()
 
     job.status_message.edit_text(
@@ -156,7 +161,7 @@ def end_conversation(update: Update, context: CallbackContext) -> int:
         reply_markup=job.get_keyboard(),
     )
 
-    context.user_data.pop('current_job')
+    context.user_data.pop('current_job_id')
 
     return ConversationHandler.END
 

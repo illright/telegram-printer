@@ -46,7 +46,7 @@ def update_copies(update: Update, context: CallbackContext) -> State:
     '''Let the user change how many copies are being printed.'''
     id = update.callback_query.data.split(':')[0]
     job = context.bot_data['jobs'][id]
-    context.user_data['current_job'] = job
+    context.user_data['current_job_id'] = job.id
 
     job.status_message.edit_text(
         copies_fmt.format(job=job, s=s(job.copies, 'ies', 'y')),
@@ -59,7 +59,8 @@ def update_copies(update: Update, context: CallbackContext) -> State:
 
 def process_input(update: Update, context: CallbackContext):
     '''Change the amount of copies arbitrarily.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     old_copies = job.copies
     job.copies = min(max(1, int(context.matches[0].group())), max_copies)
 
@@ -74,7 +75,8 @@ def process_input(update: Update, context: CallbackContext):
 
 def increment(update: Update, context: CallbackContext):
     '''Add one more copy.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     job.copies += 1
 
     job.status_message.edit_text(
@@ -86,7 +88,8 @@ def increment(update: Update, context: CallbackContext):
 
 def decrement(update: Update, context: CallbackContext):
     '''Subtract one copy.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     if job.copies > 1:
         job.copies -= 1
 
@@ -101,7 +104,8 @@ def decrement(update: Update, context: CallbackContext):
 
 def end_conversation(update: Update, context: CallbackContext) -> int:
     '''End the conversation and show the job status again.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     update.callback_query.answer()
 
     job.status_message.edit_text(
@@ -110,7 +114,7 @@ def end_conversation(update: Update, context: CallbackContext) -> int:
         reply_markup=job.get_keyboard(),
     )
 
-    context.user_data.pop('current_job')
+    context.user_data.pop('current_job_id')
 
     return ConversationHandler.END
 

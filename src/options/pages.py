@@ -48,7 +48,7 @@ def update_pages(update: Update, context: CallbackContext) -> State:
     '''Let the user change which pages are being printed.'''
     id = update.callback_query.data.split(':')[0]
     job = context.bot_data['jobs'][id]
-    context.user_data['current_job'] = job
+    context.user_data['current_job_id'] = job.id
 
     job.status_message.edit_text(
         page_status_fmt.format(job=job, s=s(job.pages.total), verbed='added'),
@@ -61,7 +61,8 @@ def update_pages(update: Update, context: CallbackContext) -> State:
 
 def process_addition(update: Update, context: CallbackContext):
     '''Add a range of pages.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     old_selection = str(job.pages)
     for range in page_range_ptn.findall(update.message.text):
         if not range[1]:
@@ -80,7 +81,8 @@ def process_addition(update: Update, context: CallbackContext):
 
 def process_removal(update: Update, context: CallbackContext):
     '''Remove a range of pages.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     old_selection = str(job.pages)
     for range in page_range_ptn.findall(update.message.text):
         if not range[1]:
@@ -99,7 +101,8 @@ def process_removal(update: Update, context: CallbackContext):
 
 def add_all(update: Update, context: CallbackContext) -> State:
     '''Add all pages.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     old_selection = str(job.pages)
     job.pages.add(slice(0, job.pages.total))
 
@@ -115,7 +118,8 @@ def add_all(update: Update, context: CallbackContext) -> State:
 
 def remove_all(update: Update, context: CallbackContext) -> State:
     '''Remove all pages.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     old_selection = str(job.pages)
     job.pages.remove(slice(0, job.pages.total))
 
@@ -131,7 +135,8 @@ def remove_all(update: Update, context: CallbackContext) -> State:
 
 def switch_to_remove(update: Update, context: CallbackContext) -> State:
     '''Change the conversation state to remove pages instead.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
 
     job.status_message.edit_text(
         page_status_fmt.format(job=job, s=s(job.pages.total), verbed='removed'),
@@ -144,7 +149,8 @@ def switch_to_remove(update: Update, context: CallbackContext) -> State:
 
 def switch_to_add(update: Update, context: CallbackContext) -> State:
     '''Change the conversation state to add pages instead.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
 
     job.status_message.edit_text(
         page_status_fmt.format(job=job, s=s(job.pages.total), verbed='added'),
@@ -157,7 +163,8 @@ def switch_to_add(update: Update, context: CallbackContext) -> State:
 
 def end_conversation(update: Update, context: CallbackContext) -> int:
     '''End the conversation and show the job status again.'''
-    job = context.user_data['current_job']
+    job_id = context.user_data['current_job_id']
+    job = context.bot_data['jobs'][job_id]
     update.callback_query.answer()
 
     job.status_message.edit_text(
@@ -166,7 +173,7 @@ def end_conversation(update: Update, context: CallbackContext) -> int:
         reply_markup=job.get_keyboard(),
     )
 
-    context.user_data.pop('current_job')
+    context.user_data.pop('current_job_id')
 
     return ConversationHandler.END
 
