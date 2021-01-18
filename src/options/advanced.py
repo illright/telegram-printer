@@ -7,9 +7,9 @@ from telegram.ext import (
     ConversationHandler,
 )
 
-from .number_up_layout import number_up_options
-from .print_job import PrintJob
-from .utils import s, get_inline_keyboard
+from ..number_up_layout import number_up_options
+from ..print_job import PrintJob
+from ..utils import s, get_inline_keyboard
 
 
 class State(Enum):
@@ -26,10 +26,10 @@ def status_text(job: PrintJob) -> str:
             text += ' •  Printing on both sides of the page\n'
         else:
             text += ' •  Printing on only one side of the page\n'
-    if job.toner_save:
-        text += ' •  Toner-save is enabled\n'
-    else:
-        text += ' •  Toner-save is disabled\n'
+    # if job.toner_save:
+    #     text += ' •  Toner-save is enabled\n'
+    # else:
+    #     text += ' •  Toner-save is disabled\n'
     if job.pages.total != 1:
         text += f' •  {job.pages.per_page} document page{s(job.pages.per_page)} per 1 physical page'
 
@@ -42,7 +42,7 @@ def get_keyboard(job: PrintJob) -> InlineKeyboardMarkup:
     layout = [
         None,
         None,
-        None,
+        # None,
         [('🔙 Back', prefix + 'back')],
     ]
 
@@ -53,14 +53,14 @@ def get_keyboard(job: PrintJob) -> InlineKeyboardMarkup:
             layout[0] = [('📄 Print on both sides', prefix + 'duplex')]
 
         if job.pages.per_page < max(number_up_options):
-            layout[2] = [('📖 Print more pages on one page', prefix + 'grid')]
+            layout[1] = [('📖 Print more pages on one page', prefix + 'grid')]
         else:
-            layout[2] = [('📖 Print less pages on one page', prefix + 'grid')]
+            layout[1] = [('📖 Print less pages on one page', prefix + 'grid')]
 
-    if job.toner_save:
-        layout[1] = [('⚫️ Disable toner-save mode', prefix + 'toner_save')]
-    else:
-        layout[1] = [('⚪️ Enable toner-save mode', prefix + 'toner_save')]
+    # if job.toner_save:
+    #     layout[2] = [('⚫️ Disable toner-save mode', prefix + 'toner_save')]
+    # else:
+    #     layout[2] = [('⚪️ Enable toner-save mode', prefix + 'toner_save')]
 
     return get_inline_keyboard(layout)
 

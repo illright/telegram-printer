@@ -10,9 +10,9 @@ from telegram.ext import (
 )
 from telegram.ext.filters import Filters
 
-from .cups_server import cups, printer
-from .print_job import PrintJob
-from .utils import s, get_inline_keyboard
+from ..cups_server import cups, printer
+from ..print_job import PrintJob
+from ..utils import s, get_inline_keyboard
 
 
 class State(Enum):

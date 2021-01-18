@@ -14,14 +14,14 @@ from telegram.ext import (
 )
 from telegram.ext.filters import Filters
 
-from .action_no_title import no_title_handler
-from .action_parse_caption import parse_caption_handler
-from .action_print import print_handler, cancel_handler
-from .action_preview import preview_handler
+from .actions.no_title import no_title_handler
+from .actions.parse_caption import parse_caption_handler
+from .actions.print import print_handler, cancel_handler
+from .actions.preview import preview_handler
 from .cups_server import notifier
-from .option_pages import pages_handler
-from .option_copies import copies_handler
-from .option_advanced import advanced_handler
+from .options.pages import pages_handler
+from .options.copies import copies_handler
+from .options.advanced import advanced_handler
 from .print_job import PrintJob
 from .utils import convert_to_pdf
 

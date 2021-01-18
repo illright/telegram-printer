@@ -10,7 +10,7 @@ from telegram.ext import (
 )
 from telegram.ext.filters import Filters
 
-from .utils import s, get_inline_keyboard
+from ..utils import s, get_inline_keyboard
 
 
 class State(Enum):
