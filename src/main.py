@@ -1,9 +1,10 @@
 import os
+import re
 from datetime import datetime, timedelta
 from secrets import compare_digest
 from tempfile import NamedTemporaryFile
 
-from cups_notify.event import CupsEvent
+from cups_notify.event import CupsEvent, CUPS_EVT_JOB_STATE_CHANGED
 from telegram import Update, ParseMode
 from telegram.ext import (
     CallbackContext,
@@ -30,6 +31,8 @@ AUTH_TOKEN = os.getenv('AUTH_TOKEN')
 
 MAX_DOWNLOAD_SIZE_MB = 20
 MAX_DOWNLOAD_SIZE = MAX_DOWNLOAD_SIZE_MB * 1024 * 1024
+job_started_desc = re.compile('Job #\\d+ started.')
+job_processing_title = re.compile('Print Job: [^(]+\\(([0-9a-f]+)\\) processing')
 
 
 def authenticate(update: Update, context: CallbackContext):
@@ -105,9 +108,14 @@ def toggle_toner_save(update: Update, context: CallbackContext):
         )
 
 
-def catch_cups_event(event: CupsEvent):
-    '''A listener callback to CUPS events.'''
+def monitor_job_creation(event: CupsEvent):
+    '''A listener callback to mark print jobs as started.'''
     print(event)
+    if job_started_desc.fullmatch(event.description) is not None:
+        match = job_processing_title.fullmatch(event.title)
+        if match is not None:
+            job_id = match.group(1)
+            updater.job_queue.run_once(mark_job_sent, when=0, context=job_id)
 
 
 def clean_up(context: CallbackContext):
@@ -121,6 +129,12 @@ def clean_up(context: CallbackContext):
             expired_ids.append(job_id)
     for job_id in expired_ids:
         jobs.pop(job_id)
+
+
+def mark_job_sent(context: CallbackContext):
+    '''Mark the given job as sent.'''
+    job = context.bot_data['jobs'][context.job.context]
+    job.set_state(PrintJob.STATE_SENT)
 
 
 persistence = PicklePersistence(filename='data.pkl', store_bot_data=False)
@@ -139,4 +153,4 @@ updater.dispatcher.add_handler(preview_handler)
 updater.dispatcher.add_handler(no_title_handler)
 updater.dispatcher.add_handler(parse_caption_handler)
 
-notifier.subscribe(catch_cups_event)
+notifier.subscribe(monitor_job_creation, [CUPS_EVT_JOB_STATE_CHANGED])

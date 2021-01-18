@@ -17,9 +17,10 @@ page_range_ptn = re.compile(r'([0-9]+)(?:\s*[-–]\s*([0-9]+))?')
 class PrintJob:
     '''An object representing a document to print with the printing options.'''
     STATE_PREPARING = 1
-    STATE_SENT = 2
-    STATE_EXPIRED = 3
-    STATE_DONE = 4
+    STATE_WAITING = 2
+    STATE_SENT = 3
+    STATE_EXPIRED = 4
+    STATE_CANCELLED = 5
 
     def __init__(self, container: BinaryIO, converted: bool, caption: str, toner_save: bool = True):
         reader = PdfFileReader(container)
@@ -43,16 +44,18 @@ class PrintJob:
     def get_message_text(self) -> str:
         '''Return the message text that is appropriate for the current state and settings.'''
         if not self.pages:
-            return 'No pages selected, I can\'t print nothing'
+            return 'No pages selected, I can\'t print nothing 🙃'
 
         if self.state == self.STATE_PREPARING:
             text = '<b>Ready to print!</b>\n'
+        elif self.state == self.STATE_WAITING:
+            text = '<b>Waiting in queue</b>\n'
         elif self.state == self.STATE_SENT:
             text = '<b>Sent for printing!</b>\n'
         elif self.state == self.STATE_EXPIRED:
             text = '<b>Job expired</b>\nForward the file to print again.\n'
-        elif self.state == self.STATE_DONE:
-            text = '<b>Job completed</b>\nForward the file to print again.\n'
+        elif self.state == self.STATE_CANCELLED:
+            text = '<b>Job cancelled</b>\nForward the file to print again.\n'
         else:
             text = '<b>Something broke down :(</b>'
 
@@ -99,6 +102,8 @@ class PrintJob:
 
             if self.potential_page_ranges:
                 layout[3] = [('💡 Select the pages in the caption', prefix + 'parse_caption')]
+        elif self.state == self.STATE_WAITING:
+            layout = [[('Cancel', prefix + 'cancel')]]
         else:
             layout = None
 
@@ -143,21 +148,25 @@ class PrintJob:
             print_options['sides'] = 'one-sided'
 
         self.job_index = cups.printFile(printer, self.container.name, self.id, print_options)
-        self.state = self.STATE_SENT
-        self.status_message.edit_text(
-            self.get_message_text(),
-            parse_mode=ParseMode.HTML,
-        )
+        self.set_state(self.STATE_WAITING)
 
     def expire(self):
         '''Expire the job, freeing up its resources.'''
         self.container.close()
-        if self.state == self.STATE_SENT:
-            self.state = self.STATE_DONE
-        else:
-            self.state = self.STATE_EXPIRED
+        if self.state != self.STATE_SENT:
+            self.set_state(self.STATE_EXPIRED)
 
+    def cancel(self):
+        '''Cancel the job, freeing up its resources.'''
+        cups.cancelJob(self.job_index, purge_job=True)
+        self.container.close()
+        self.set_state(self.STATE_CANCELLED)
+
+    def set_state(self, new_state):
+        '''Set a new state for the print job, updating its message.'''
+        self.state = new_state
         self.status_message.edit_text(
             self.get_message_text(),
+            reply_markup=self.get_keyboard(),
             parse_mode=ParseMode.HTML,
         )
