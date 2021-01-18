@@ -4,14 +4,16 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-pylint = "*"
+python-language-server = {extras = ["all"], version = "*"}
 
 [packages]
 python-telegram-bot = "*"
-python-dotenv = "*"
 pypdf4 = "*"
 pycups = "*"
 pycups-notify = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"
+
+[scripts]
+dev = "python run.py"

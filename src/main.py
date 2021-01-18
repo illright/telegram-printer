@@ -4,7 +4,6 @@ from secrets import compare_digest
 from tempfile import NamedTemporaryFile
 
 from cups_notify.event import CupsEvent
-from dotenv import load_dotenv
 from telegram import Update, ParseMode
 from telegram.ext import (
     CallbackContext,
@@ -27,7 +26,6 @@ from .print_job import PrintJob
 from .utils import convert_to_pdf
 
 
-load_dotenv()
 AUTH_TOKEN = os.getenv('AUTH_TOKEN')
 
 MAX_DOWNLOAD_SIZE_MB = 20
