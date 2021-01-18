@@ -110,7 +110,6 @@ def toggle_toner_save(update: Update, context: CallbackContext):
 
 def monitor_job_creation(event: CupsEvent):
     '''A listener callback to mark print jobs as started.'''
-    print(event)
     if job_started_desc.fullmatch(event.description) is not None:
         match = job_processing_title.fullmatch(event.title)
         if match is not None:
@@ -133,8 +132,9 @@ def clean_up(context: CallbackContext):
 
 def mark_job_sent(context: CallbackContext):
     '''Mark the given job as sent.'''
-    job = context.bot_data['jobs'][context.job.context]
-    job.set_state(PrintJob.STATE_SENT)
+    job = context.bot_data['jobs'].get(context.job.context)
+    if job is not None:
+        job.set_state(PrintJob.STATE_SENT)
 
 
 persistence = PicklePersistence(filename='data.pkl', store_bot_data=False)
